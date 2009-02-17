@@ -234,6 +234,24 @@ static inline int btostr( char *p,  unsigned char val)
 
 #define INT2STR_MAX_LEN  (19+1+1) /* 2^64~= 16*10^18 => 19+1 digits + \0 */
 
+static inline char* int2bstr(unsigned long l, char *s, int* len)
+{
+	int i;
+
+	i=INT2STR_MAX_LEN-2;
+	s[INT2STR_MAX_LEN-1]=0; /* null terminate */
+	do{
+		s[i]=l%10+'0';
+		i--;
+		l/=10;
+	}while(l && (i>=0));
+	if (l && (i<0)){
+		LM_CRIT("overflow error\n");
+	}
+	if (len) *len=(INT2STR_MAX_LEN-2)-i;
+	return &s[i+1];
+}
+
 /* 
  * returns a pointer to a static buffer containing l in asciiz (with base "base") & sets len 
  * left padded with 0 to "size"

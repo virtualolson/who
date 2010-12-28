@@ -661,7 +661,7 @@ int receive_loop(peer *original_peer)
 		while(!n){
 			if (shutdownx&&*shutdownx) break;	
 	
-			log_serviced_peers(L_MEM);
+			log_serviced_peers(L_INFO);
 	
 			max =-1;
 	

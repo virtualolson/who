@@ -135,6 +135,8 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 #define SIP_SCH		0x3a706973
 #define SIPS_SCH	0x73706973
 #define TEL_SCH		0x3a6c6574
+#define URN_SCH		0x3a6e7275
+#define CID_SCH		0x3a646963
 	
 #define case_port( ch, var) \
 	case ch: \
@@ -395,6 +397,11 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		else goto error_bad_uri;
 	}else if (scheme==TEL_SCH){
 		uri->type=TEL_URI_T;
+	}else if( scheme==URN_SCH){
+		uri->type=URN_T;
+		return URN_T;
+	}else if(scheme == CID_SCH){
+		uri->type = CID_T;
 	}else goto error_bad_uri;
 	
 	s=p;
@@ -1394,7 +1401,7 @@ static inline int _parse_ruri(str *uri,
 int parse_sip_msg_uri(struct sip_msg* msg)
 {
 	char* tmp;
-	int tmp_len;
+	int tmp_len, ret;
 	if (msg->parsed_uri_ok) return 1;
 
 	if (msg->new_uri.s){
@@ -1404,11 +1411,16 @@ int parse_sip_msg_uri(struct sip_msg* msg)
 		tmp=msg->first_line.u.request.uri.s;
 		tmp_len=msg->first_line.u.request.uri.len;
 	}
-	if (parse_uri(tmp, tmp_len, &msg->parsed_uri)<0){
+	ret = parse_uri(tmp, tmp_len, &msg->parsed_uri);
+	if (ret<0){
 		DBG("ERROR: parse_sip_msg_uri: bad uri <%.*s>\n",
 			tmp_len, tmp);
 		msg->parsed_uri_ok=0;
 		return -1;
+	}else if(ret == URN_T){
+		LOG(L_DBG, "DBG: needs to be parsed as an URN\n");
+	}else if(ret == CID_T){
+		LOG(L_DBG, "DBG: needs to be parsed as a CID\n");
 	}
 	msg->parsed_uri_ok=1;
 	return 1;

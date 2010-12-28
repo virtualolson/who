@@ -67,8 +67,8 @@
 
 	unsigned long shm_mem_size = SHM_MEM_SIZE;
 	int memlog = L_ERR;
-	int memdbg = L_MEM;
-	int debug = L_MEM;
+	int memdbg = L_INFO;
+	int debug = L_INFO;
 	int log_facility = 1;
 	int log_stderr = 1;
 	int process_no=0;

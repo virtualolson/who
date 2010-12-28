@@ -272,7 +272,7 @@ int peer_timer(time_t now,void *ptr)
 {
 	peer *p,*n;
 	int i;
-	LOG(L_MEM,"DBG:peer_timer(): taking care of peers...\n");
+	LOG(L_INFO,"DBG:peer_timer(): taking care of peers...\n");
 	lock_get(peer_list_lock);
 	p = peer_list->head;
 	while(p){

@@ -13,6 +13,9 @@ NAME=isc.so
 ifeq ($(CFG_NAME),sip-router)
 	DEFS+=-DSER_MOD_INTERFACE
 endif	
+ifeq ($(CFG_NAME),kamailio)
+	DEFS+=-DSER_MOD_INTERFACE
+endif	
 
 DEFS += -I/usr/include/libxml2
 LIBS += -L$(LOCALBASE)/lib -lxml2

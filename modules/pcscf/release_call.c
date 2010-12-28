@@ -411,7 +411,7 @@ int release_call_previous(p_dialog *d,enum release_call_situation situation,int 
 			d->dialog_c->state=DLG_EARLY;
 				
 			tmb.t_reply(t->uas.request,reason_code,reason_text.s);
-			*tmb.route_mode=MODE_ONREPLY;
+			// *tmb.route_mode=MODE_ONREPLY;
 			t->uas.status=488;
 			tmb.t_release(t->uas.request);
 		/*needed because if not i get last message retransmited... 

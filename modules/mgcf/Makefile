@@ -11,7 +11,7 @@ NAME=mgcf.so
 
 include ../../Makefile.modules
 
-DEFS += -I../../lib -DSER -I../..
-LIBS += -L../../lib/cds -l_ser_cds
+#DEFS += -I../../lib -DSER -I../..
+#LIBS += -L../../lib/cds -l_ser_cds
 
 #DEFS += -DWITH_IMS_PM

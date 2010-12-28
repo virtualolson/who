@@ -11,6 +11,12 @@ include ../../Makefile.defs
 auto_gen=
 NAME=scscf.so
 
+ifeq ($(CFG_NAME),kamailio)
+	DEFS+=-DSER_MOD_INTERFACE
+	SERLIBPATH=../../lib
+	SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
+	#LIBS+=-L../../lib/cds -lser_cds
+else
 ifeq ($(CFG_NAME),sip-router)
 	DEFS+=-DSER_MOD_INTERFACE
 	SERLIBPATH=../../lib
@@ -18,6 +24,7 @@ ifeq ($(CFG_NAME),sip-router)
 	LIBS+=-L../../lib/cds -lser_cds
 else
 	LIBS+=-L../../lib/cds -l_ser_cds
+endif
 endif
 
 DEFS += -DCDP_FOR_SER

@@ -14,7 +14,7 @@ ifeq ($(CFG_NAME),kamailio)
 	DEFS+=-DSER_MOD_INTERFACE
 	SERLIBPATH=../../lib
 	SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
-	LIBS+=-L../../lib/cds -lser_cds
+	#LIBS+=-L../../lib/cds -lser_cds
 else
 ifeq ($(CFG_NAME),sip-router)
 	DEFS+=-DSER_MOD_INTERFACE

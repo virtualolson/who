@@ -42,7 +42,7 @@ MODULES_SP=
 # on which other depend first)
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils purple memcached tls \
-			   snmpstats carrierroute xmpp cpl lua python geoip
+			   snmpstats carrierroute xmpp cpl lua python geoip ims
 
 # directories with possible duplicate libraries (that should be deleted
 # from current module* packages)

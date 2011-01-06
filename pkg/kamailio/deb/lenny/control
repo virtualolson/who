@@ -275,4 +275,13 @@ Description: Kamailio - package for "nice to have" installation
  This is a meta-package for easy installation various useful tools that may be
  handy on server with Kamailio installed.
 
+Package: kamailio-ims-modules
+Architecture: any
+Depends: ${shlibs:Depends}, kamailio (= ${binary:Version})
+Description: IMS Modules for Kamailio
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the OpenIMS-Modules for Kamailio.
 

@@ -271,6 +271,9 @@ module_group_kpython=app_python
 # K geoip module
 module_group_kgeoip=geoip
 
+# K IMS modules
+module_group_kims=pcscf cdp
+
 # if not set on the cmd. line, env or in the modules.lst (cfg_group_include)
 # exclude the below modules.
 ifneq ($(group_include)$(cfg_group_include),)
@@ -830,6 +833,28 @@ deb:
 		rm debian; \
 	else \
 		ln -s pkg/$(MAIN_NAME)/deb/debian debian; \
+		dpkg-buildpackage -rfakeroot -tc; \
+		rm debian; \
+	fi
+
+.PHONY: deb-lenny
+deb-lenny:
+	-@if [ -d debian ]; then \
+		dpkg-buildpackage -rfakeroot -tc; \
+		rm debian; \
+	else \
+		ln -s pkg/$(MAIN_NAME)/deb/lenny debian; \
+		dpkg-buildpackage -rfakeroot -tc; \
+		rm debian; \
+	fi
+
+.PHONY: deb-squeeze
+deb-lenny:
+	-@if [ -d debian ]; then \
+		dpkg-buildpackage -rfakeroot -tc; \
+		rm debian; \
+	else \
+		ln -s pkg/$(MAIN_NAME)/deb/squeeze debian; \
 		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \
 	fi

@@ -272,7 +272,7 @@ module_group_kpython=app_python
 module_group_kgeoip=geoip
 
 # K IMS modules
-module_group_kims=pcscf cdp
+module_group_kims=pcscf icscf scscf isc cdp cdp_avp
 
 # if not set on the cmd. line, env or in the modules.lst (cfg_group_include)
 # exclude the below modules.

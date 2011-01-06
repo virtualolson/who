@@ -19,6 +19,8 @@ DEFS += -DCDP_FOR_SER
 DEFS += -I/usr/include/libxml2 
 LIBS += -L$(LOCALBASE)/lib -lxml2
 
+MOD_INSTALL_CFGS=emerg_info.xml reginfo.dtd
+
 #DEFS += -DWITH_IMS_PM
 
 include ../../Makefile.modules

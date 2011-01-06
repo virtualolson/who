@@ -849,7 +849,7 @@ deb-lenny:
 	fi
 
 .PHONY: deb-squeeze
-deb-lenny:
+deb-squeeze:
 	-@if [ -d debian ]; then \
 		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \

@@ -9,25 +9,11 @@ include ../../Makefile.defs
 auto_gen=
 NAME=pcscf.so
 
-
-ifeq ($(CFG_NAME),kamailio)
-	DEFS+=-DSER_MOD_INTERFACE
-	SERLIBPATH=../../lib
-	SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
-	#LIBS+=-L../../lib/cds -lser_cds
-else
-ifeq ($(CFG_NAME),sip-router)
-	DEFS+=-DSER_MOD_INTERFACE
-	SERLIBPATH=../../lib
-	SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
-	LIBS+=-L../../lib/cds -lser_cds
-else
-	LIBS+=-L../../lib/cds -l_ser_cds
-endif
-endif
-
-DEFS += -I/usr/include/libxml2 -I../../lib -DSER -I../..
-LIBS += -lxml2
+DEFS+=-DSER
+INCLUDES = -I../../lib -I../..
+DEFS+=-DSER_MOD_INTERFACE
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/cds/ser_cds
 
 DEFS += -DCDP_FOR_SER
 DEFS += -I/usr/include/libxml2 

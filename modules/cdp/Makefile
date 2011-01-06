@@ -9,19 +9,8 @@ include ../../Makefile.defs
 auto_gen=
 NAME=cdp.so
 
-ifeq ($(CFG_NAME),sip-router)
-	DEFS+=-DSER_MOD_INTERFACE
-endif	
-
-ifeq ($(CFG_NAME),kamailio)
-	DEFS+=-DSER_MOD_INTERFACE
-endif	
-
-ifeq ($(CFG_NAME),Wharf)
-	DEFS += -DWHARF
-else
-	DEFS += -DCDP_FOR_SER
-endif	
+DEFS+=-DSER_MOD_INTERFACE
+DEFS += -DCDP_FOR_SER
 
 DEFS += -I/usr/include/libxml2 
 LIBS += -L$(LOCALBASE)/lib -lxml2 -lrt

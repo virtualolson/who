@@ -6,12 +6,17 @@
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
+
 auto_gen=
 NAME=mgcf.so
 
-include ../../Makefile.modules
+DEFS+=-DSER_MOD_INTERFACE
+DEFS+=-DSER
 
-#DEFS += -I../../lib -DSER -I../..
-#LIBS += -L../../lib/cds -l_ser_cds
+SERLIBPATH=../../lib
+INCLUDES = -I../../lib -I../..
+SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/cds/ser_cds
+
+include ../../Makefile.modules
 
 #DEFS += -DWITH_IMS_PM

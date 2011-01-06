@@ -63,7 +63,7 @@
 #include "../../timer.h"
 #include "../../locking.h"
 #include "../tm/tm_load.h"
-#include "../dialog/dlg_mod.h"
+#include "../../modules_s/dialog/dlg_mod.h"
 #include "../../pt.h"
 
 

@@ -57,28 +57,6 @@
 #include "globals.h"
 #include "utils.h"
 
-#ifdef CDP_FOR_SER
-
-#else
-
-#ifdef WHARF
-
-#else
-
-	unsigned long shm_mem_size = SHM_MEM_SIZE;
-	int memlog = L_ERR;
-	int memdbg = L_INFO;
-	int debug = L_INFO;
-	int log_facility = 1;
-	int log_stderr = 1;
-	int process_no=0;
-	
-#endif
-	
-#endif
-
-
-
 //str aaa_fqdn={"unset_fqdn",10};
 //str aaa_realm={"unset_realm",11};
 //str aaa_identity={"unset_identity",14};
@@ -90,7 +68,7 @@ int init_memory(int show_status)
 	if (init_pkg_mallocs()==-1)
 		goto error;
 	if (show_status){
-		LOG(memlog, "Memory status (pkg):\n");
+		LOG(L_DBG, "Memory status (pkg):\n");
 		pkg_status();
 	}
 #endif
@@ -104,7 +82,7 @@ int init_memory(int show_status)
 		)==-1)
 		goto error;
 	if (show_status){
-		LOG(memlog, "Memory status (shm):\n");
+		LOG(L_DBG, "Memory status (shm):\n");
 		shm_status();
 	}
 #endif
@@ -123,7 +101,7 @@ void destroy_memory(int show_status)
 	                             allow an almost gracious shutdown */
 #ifdef SHM_MEM
 	if (show_status){
-		LOG(memlog, "Memory status (shm):\n");
+		LOG(L_INFO, "Memory status (shm):\n");
 		//shm_status();
 #ifndef SER_MOD_INTERFACE
 		shm_sums();
@@ -138,7 +116,7 @@ void destroy_memory(int show_status)
 #endif
 #ifdef PKG_MALLOC
 	if (show_status){
-		LOG(memlog, "Memory status (pkg):\n");
+		LOG(L_INFO, "Memory status (pkg):\n");
 		//pkg_status();
 #ifndef SER_MOD_INTERFACE
 		pkg_sums();

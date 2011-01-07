@@ -406,17 +406,6 @@ void worker_process(int id)
 	}
 	worker_poison_queue();
 	LOG(L_INFO,"INFO:[%d]... Worker process finished\n",id);	
-#ifdef CDP_FOR_SER
-#else
-	#ifdef PKG_MALLOC
-		LOG(memlog, "Worker[%d] Memory status (pkg):\n",id);
-		//pkg_status();
-		#ifdef pkg_sums
-			pkg_sums();
-		#endif 
-	#endif
-	dp_del_pid(getpid());	
-#endif
 	exit(0);
 }
 

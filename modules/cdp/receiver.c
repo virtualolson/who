@@ -487,21 +487,6 @@ done:
 	}
 	/* remove pid from list of running processes */
 	dp_del_pid(getpid());
-	
-#ifdef CDP_FOR_SER
-			
-#else
-#ifdef PKG_MALLOC
-	#ifdef PKG_MALLOC
-		LOG(memlog, "Receiver[%.*s] Memory status (pkg):\n",
-				p?p->fqdn.len:0,p?p->fqdn.s:0);
-		//pkg_status();
-		#ifdef pkg_sums
-			pkg_sums();
-		#endif 
-	#endif
-#endif
-#endif		
 		
 	LOG(L_INFO,"INFO:receiver_process(): [%.*s]... Receiver process finished.\n",
 			p?p->fqdn.len:0,p?p->fqdn.s:0);

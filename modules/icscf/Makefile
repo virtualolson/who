@@ -19,6 +19,8 @@ DEFS += -DCDP_FOR_SER
 DEFS += -I/usr/include/libxml2 
 LIBS += -L$(LOCALBASE)/lib -lxml2
 
+MOD_INSTALL_CFGS=CxDataType.dtd CxDataType_Rel6.xsd CxDataType_Rel7.xsd scscf.cfg scscf.xml
+
 #DEFS+= -DWITH_IMS_PM
 
 

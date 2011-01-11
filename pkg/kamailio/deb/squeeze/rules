@@ -46,8 +46,8 @@ PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 
 # directories with possible duplicate libraries (that should be deleted
 # from current module* packages)
-DUP_LIBS_DIRS=$(CURDIR)/debian/kamailio/usr/lib/kamailio \
-			$(CURDIR)/debian/kamailio-db-modules/usr/lib/kamailio
+DUP_LIBS_DIRS=$(CURDIR)/debian/kamailio/usr/lib/kamailio #\
+			#$(CURDIR)/debian/kamailio-db-modules/usr/lib/kamailio
 
 # modules names out of modules sp
 MODULES_SP_NAMES=$(filter-out $(MDIRS),$(subst /, ,$(MODULES_SP)))

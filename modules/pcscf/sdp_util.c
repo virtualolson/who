@@ -248,24 +248,28 @@ static int extract_mediaip(str *body, str *mediaip, int *pf)
 
 
 
-//static int sdp_1918(struct sip_msg* msg)
-//{
-//	str body, ip;
-//	int pf;
-//
-//	if (extract_sdp_body(msg, &body) == -1) {
-//		LOG(L_ERR,"ERROR: sdp_1918: cannot extract body from msg!\n");
-//		return 0;
-//	}
-//	if (extract_mediaip(&body, &ip, &pf) == -1) {
-//		LOG(L_ERR, "ERROR: sdp_1918: can't extract media IP from the SDP\n");
-//		return 0;
-//	}
-//	if (pf != AF_INET || isnulladdr(&ip, pf))
-//		return 0;
-//
-//	return (is1918addr(&ip) == 1) ? 1 : 0;
-//}
+static int sdp_1918(struct sip_msg* msg)
+{
+	str body, ip;
+	int pf;
+
+	if (!msg) {
+		LOG(L_ERR,"ERROR: sdp_1918: No msg!\n");
+		return 0;
+	}
+	if (extract_sdp_body(msg, &body) == -1) {
+		LOG(L_ERR,"ERROR: sdp_1918: cannot extract body from msg!\n");
+		return 0;
+	}
+	if (extract_mediaip(&body, &ip, &pf) == -1) {
+		LOG(L_ERR, "ERROR: sdp_1918: can't extract media IP from the SDP\n");
+		return 0;
+	}
+	if (pf != AF_INET || isnulladdr(&ip, pf))
+		return 0;
+
+	return (is1918addr(&ip) == 1) ? 1 : 0;
+}
 
 static int alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
   			str *newip, int newpf, int preserve)
@@ -1499,7 +1503,7 @@ int P_SDP_manipulate(struct sip_msg *msg,char *str1,char *str2)
 				had_sdp_in_invite = 1;
 			 		/* on INVITE */
 					/* check the sdp if it has a 1918 */
-					if(1)
+					if (sdp_1918(msg))
 					{
 					/* get rtp_proxy/nathelper to open ports - get a iovec*/
 						if (pcscf_nat_enable && rtpproxy_enable)
@@ -1517,7 +1521,7 @@ int P_SDP_manipulate(struct sip_msg *msg,char *str1,char *str2)
 		    		if (msg->first_line.u.reply.statuscode == 183 ||
 				    	(msg->first_line.u.reply.statuscode >= 200 &&
 				    	 msg->first_line.u.reply.statuscode < 300)) {
-					if(1){
+					if (sdp_1918(msg)){
 						/* sdp_1918(msg) */
 						/* str1 & str2 must be something */
 						if (pcscf_nat_enable && rtpproxy_enable)

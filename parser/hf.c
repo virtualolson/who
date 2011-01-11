@@ -58,6 +58,7 @@
 #include "contact/parse_contact.h"
 #include "parse_disposition.h"
 #include "parse_allow.h"
+#include "parse_geoloc.h"
 #include "../ut.h"
 
 /** Frees a hdr_field structure.
@@ -205,6 +206,9 @@ void clean_hdr_field(struct hdr_field* hf)
 		case HDR_IDENTITY_T:
 			free_identity(hf->parsed);
 			break;
+ 		case HDR_GEOLOCATION_T:
+  			free_geoloc((struct geoloc_body **)h_parsed);
+  			break;
 
 		case HDR_SESSIONEXPIRES_T:
 		case HDR_MIN_SE_T:

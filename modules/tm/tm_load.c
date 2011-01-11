@@ -82,6 +82,14 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
 		return -1;
 	}*/
+	if (!(tmb->t_enter_ctx=(tenter_ctx_f)find_export("t_enter_ctx",NO_SCRIPT,0))) {
+		LOG( L_ERR, LOAD_ERROR "'t_enter_ctx' not found\n");
+		return -1;
+	}
+	if (!(tmb->t_exit_ctx=(texit_ctx_f)find_export("t_exit_ctx",NO_SCRIPT,0))) {
+		LOG( L_ERR, LOAD_ERROR "'t_exit_ctx' not found\n");
+		return -1;
+	}
 
 	/* non-cfg API */
 	tmb->register_tmcb =register_tmcb;

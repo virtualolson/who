@@ -121,6 +121,8 @@ enum _hdr_types_t {
 	HDR_PATH_T                         /*!< Path header field */,
 	HDR_PRIVACY_T				       /*!< Privacy header field */,
 	HDR_REASON_T				       /**< Reason header field */,
+	HDR_GEOLOCATION_T			/* Geolocation header field */,
+	HDR_ESQK_T				/* ESQK header field, for Emergency Services */,
 	HDR_EOH_T					       /*!< End of message header */
 };
 
@@ -194,7 +196,7 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_PATH_F                  HDR_F_DEF(PATH)
 #define HDR_PRIVACY_F               HDR_F_DEF(PRIVACY)
 #define HDR_REASON_F				HDR_F_DEF(REASON)
-
+#define HDR_GEOLOCATION_F		HDR_F_DEF(GEOLOCATION)
 #define HDR_OTHER_F					HDR_F_DEF(OTHER)
 
 /*!} */ /* Doxygen end marker*/
@@ -234,6 +236,7 @@ static inline int hdr_allocs_parse(struct hdr_field* hdr)
 		case HDR_RPID_T:
 		case HDR_REFER_TO_T:
 		case HDR_SUBSCRIPTION_STATE_T:
+		case HDR_GEOLOCATION_T:
 			return 1;
 		default:
 			return 0;

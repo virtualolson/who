@@ -488,6 +488,8 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 		case HDR_PATH_T:
 		case HDR_PRIVACY_T:
 		case HDR_REASON_T:
+		case HDR_GEOLOCATION_T:
+		case HDR_ESQK_T:
 			/* we ignore them for now even if they have something parsed*/
 			break;
 		}/*switch*/
@@ -621,6 +623,8 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 		case HDR_IDENTITY_INFO_T:
 		case HDR_RETRY_AFTER_T:
 		case HDR_REASON_T:
+		case HDR_GEOLOCATION_T:
+		case HDR_ESQK_T:
 			break;
 
 		case HDR_VIA_T:

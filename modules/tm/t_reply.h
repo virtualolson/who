@@ -61,6 +61,9 @@ enum rps {
 extern char tm_tags[TOTAG_VALUE_LEN];
 extern char *tm_tag_suffix;
 
+enum route_mode { MODE_REQUEST=1, MODE_ONREPLY, MODE_ONFAILURE };
+extern enum route_mode rmode;
+
 extern int goto_on_sl_reply;
 
 extern int failure_reply_mode;
@@ -135,6 +138,15 @@ typedef int (*treply_wb_f)( struct cell* trans,
 	str *new_header, str *to_tag);
 typedef int (*treply_trans_f)(struct cell *t, struct sip_msg* p_msg, unsigned int code,
 	char * text);
+typedef int (*tenter_ctx_f)(unsigned int new_hash_index, unsigned int new_label,
+		enum route_mode * crt_rmode, enum route_mode new_rmode, 
+		struct cell** crt_trans, struct cell ** new_trans);
+typedef int (*texit_ctx_f)(struct cell * new_trans, enum route_mode new_rmode);
+
+int t_enter_ctx(unsigned int new_hash_index, unsigned int new_label,
+		enum route_mode * crt_rmode, enum route_mode new_rmode, 
+		struct cell** crt_trans, struct cell ** new_trans);
+int t_exit_ctx(struct cell * new_trans, enum route_mode new_rmode);
 
 /* wrapper function needed after changes in w_t_reply */
 int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt);

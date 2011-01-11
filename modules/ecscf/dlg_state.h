@@ -55,16 +55,11 @@
 #include "../../sr_module.h"
 #include "mod.h"
 #include "../../locking.h"
-#include "../modules/tm/dlg.h"
-#ifdef SER_MOD_INTERFACE
-	#include "../lib/lost/client.h"
-	#include "../lib/lost/parsing.h"
-	#include "../lib/lost/pidf_loc.h"
-#else
-	#include "../../lib/lost/client.h"
-	#include "../../lib/lost/parsing.h"
-	#include "../../lib/lost/pidf_loc.h"
-#endif
+#include "../tm/dlg.h"
+
+#include "../../lib/lost/client.h"
+#include "../../lib/lost/parsing.h"
+#include "../../lib/lost/pidf_loc.h"
 
 /** Enumeration for known dialogs */
 enum e_dialog_method {

@@ -56,11 +56,7 @@
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
-#ifdef SER_MOD_INTERFACE
-	#include "../../modules_s/sl/sl_funcs.h"
-#else
-	#include "../../modules/sl/sl_funcs.h"
-#endif
+#include "../../modules/sl/sl_funcs.h"
 
 #include "sip.h"
 

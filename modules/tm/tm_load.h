@@ -129,6 +129,8 @@ struct tm_binds {
 #else
 	void* reserved5;
 #endif
+	tenter_ctx_f    t_enter_ctx;
+	texit_ctx_f    t_exit_ctx;
 };
 
 typedef struct tm_binds tm_api_t;

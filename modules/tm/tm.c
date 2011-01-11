@@ -471,6 +471,8 @@ static cmd_export_t cmds[]={
 	/* not applicable from the script */
 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,   0, 0},
 	{"load_xtm",           (cmd_function)load_xtm,          NO_SCRIPT,   0, 0},
+	{"t_enter_ctx",	 (cmd_function)t_enter_ctx,	NO_SCRIPT,	0,	0},
+	{"t_exit_ctx",	 (cmd_function)t_exit_ctx,	NO_SCRIPT,	0,	0},
 	{0,0,0,0,0}
 };
 

@@ -1150,6 +1150,12 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			uri->host.s="";
 			uri->host.len=0;
 			break;
+		case URN_T:
+			LOG(L_ERR, "ERROR: parse_uri: not handling URN type\n");
+			goto error_bad_uri;
+			break;
+		case CID_T:
+			break;
 		case ERROR_URI_T:
 			LOG(L_ERR, "ERROR: parse_uri unexpected error (BUG?)\n"); 
 			goto error_bad_uri;

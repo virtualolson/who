@@ -11,12 +11,15 @@ NAME=ecscf.so
 
 DEFS+=-DSER
 DEFS+=-DSER_MOD_INTERFACE
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/lost/lost_client
+DEFS+=-DCDP_FOR_SER
 
-DEFS += -DCDP_FOR_SER
-DEFS += -I/usr/include/libxml2 -I$(SERLIBPATH) -I../..
-LIBS += -L$(LOCALBASE)/lib -lxml2
+INCLUDES += -I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
+			-I$(LOCALBASE)/include -I../../lib -I../..
+
+LIBS += -L$(LOCALBASE)/lib -L/usr/pkg/lib -lxml2 
+
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/lost/lost_client \
 
 #MOD_INSTALL_CFGS=ecscf.cfg
 

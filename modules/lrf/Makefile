@@ -8,18 +8,18 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=lrf.so
-LIBS=
 
 DEFS+=-DSER
-INCLUDES = -I../../lib -I../..
 DEFS+=-DSER_MOD_INTERFACE
+DEFS+=-DCDP_FOR_SER
+
+INCLUDES += -I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
+			-I$(LOCALBASE)/include -I../../lib -I../..
+
+LIBS += -L$(LOCALBASE)/lib -L/usr/pkg/lib -lxml2 
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/cds/ser_cds $(SERLIBPATH)/lost/lost_client
-
-DEFS += -DCDP_FOR_SER
-DEFS += -I/usr/include/libxml2 
-LIBS += -L$(LOCALBASE)/lib -lxml2
 
 #MOD_INSTALL_CFGS=lrf.cfg
 

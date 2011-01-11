@@ -23,5 +23,5 @@ SER_LIBS=$(SERLIBPATH)/cds/ser_cds
 # TYPE=lib => shared or static library, executable otherwise
 TYPE = lib
 
-include ../Makefile.defs
+include ../../Makefile.libs
 

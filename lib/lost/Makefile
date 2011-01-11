@@ -16,7 +16,7 @@ libcurl_includes=-I/usr/include/curl -I$(LOCALBASE)/include/curl \
 libxml2_libs=-L$(LOCALBASE)/lib -lxml2
 libcurl_libs=-L$(LOCALBASE)/lib -lcurl
 INCLUDES= -I$(CURDIR)/.. -I$(CURDIR)/../.. $(libxml2_includes) $(libcurl_includes)  
-LIBS=$(libxml2_libs) $(libcurl_libs) -L../cds -lcds 
+LIBS=$(libxml2_libs) $(libcurl_libs)
 SERLIBPATH=..
 SER_LIBS=$(SERLIBPATH)/cds/ser_cds
 

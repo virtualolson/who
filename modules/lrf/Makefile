@@ -15,7 +15,7 @@ INCLUDES = -I../../lib -I../..
 DEFS+=-DSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/cds/ser_cds
+SER_LIBS+=$(SERLIBPATH)/cds/ser_cds $(SERLIBPATH)/lost/lost_client
 
 DEFS += -DCDP_FOR_SER
 DEFS += -I/usr/include/libxml2 

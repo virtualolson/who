@@ -11,7 +11,7 @@ NAME=ecscf.so
 
 DEFS+=-DSER_MOD_INTERFACE
 SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
+SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/lost/lost_client
 
 DEFS += -DCDP_FOR_SER
 DEFS += -I/usr/include/libxml2 -I$(SERLIBPATH) -I../..

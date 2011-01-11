@@ -73,7 +73,6 @@
 #include "sip.h"
 #include "user_data.h"
 
-extern int debug;
 extern struct tm_binds tmb;   		/**< Structure with pointers to tm funcs 		*/
 extern dlg_func_t dialogb;			/**< Structure with pointers to dialog funcs			*/
 
@@ -650,7 +649,7 @@ void print_subs(int log_level)
 {
 	loc_subscription *s;
 	int i;
-	if (debug<log_level) return; /* to avoid useless calls when nothing will be printed */	
+	if (L_DBG<log_level) return; /* to avoid useless calls when nothing will be printed */	
 	LOG(log_level,ANSI_GREEN"INF:"M_NAME":----------  Subscription list begin ---------\n");
 	for(i=0;i<subscriptions_hash_size;i++){
 		subs_lock(i);

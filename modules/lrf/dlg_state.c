@@ -532,7 +532,7 @@ void print_lrf_dialogs(int log_level)
 {
 	lrf_dialog *d;
 	int i,j;
-	//if (debug<log_level) return; /* to avoid useless calls when nothing will be printed */
+	if (L_DBG<log_level) return; /* to avoid useless calls when nothing will be printed */
 	d_act_time();
 	LOG(log_level,"INF:"M_NAME":----------  LRF Dialog List begin --------------\n");
 	for(i=0;i<lrf_dialogs_hash_size;i++){

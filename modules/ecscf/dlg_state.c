@@ -60,7 +60,6 @@
 
 #include "sip.h"
 
-extern int debug;
 extern struct tm_binds tmb;
 
 int e_dialogs_hash_size;						/**< size of the dialog hash table 					*/
@@ -638,7 +637,7 @@ void print_e_dialogs(int log_level)
 {
 	e_dialog *d;
 	int i;
-	if (debug<log_level) return; /* to avoid useless calls when nothing will be printed */
+	if (L_DBG<log_level) return; /* to avoid useless calls when nothing will be printed */
 	d_act_time();
 	LOG(log_level,"INF:"M_NAME":----------  E-CSCF Dialog List begin --------------\n");
 	for(i=0;i<e_dialogs_hash_size;i++){

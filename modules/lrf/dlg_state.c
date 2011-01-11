@@ -59,11 +59,7 @@
 
 #include "../../mem/shm_mem.h"
 
-#ifdef SER_MOD_INTERFACE
-	#include "../../modules_s/sl/sl_funcs.h"
-#else	
-	#include "../sl/sl_funcs.h"
-#endif
+#include "../../modules/sl/sl_funcs.h"
 
 #include "sip.h"
 //#include "release_call.h"

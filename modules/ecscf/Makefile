@@ -17,6 +17,6 @@ DEFS += -DCDP_FOR_SER
 DEFS += -I/usr/include/libxml2 -I$(SERLIBPATH) -I../..
 LIBS += -L$(LOCALBASE)/lib -lxml2
 
-#MOD_INSTALL_CFGS=ecscf.cfg ecscf.xml
+#MOD_INSTALL_CFGS=ecscf.cfg
 
 include ../../Makefile.modules

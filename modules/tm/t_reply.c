@@ -236,7 +236,14 @@ int t_get_picked_branch(void)
    *inside*  t_relay using hints stored in private memory
    before t_relay is called
 */
+enum route_mode get_rmode(){
+	return rmode;
+}
 
+void set_rmode(enum route_mode crt_rmode){
+	
+	rmode = crt_rmode;
+}
 
 void t_on_negative( unsigned int go_to )
 {
@@ -2620,9 +2627,8 @@ int t_enter_ctx(unsigned int new_hash_index, unsigned int new_label,
 	t = get_t();
 	if(t == NULL || t == T_UNDEFINED)
 		ERR("t_enter_ctx: null crt trans\n");
-	else {DEBUG("t_enter_ctx: ref number is %i\n", t->ref_count);
-		*crt_trans = get_t(); 
-	}
+	else *crt_trans = get_t(); 
+
 	*crt_rmode = get_rmode();
 
 	if(t_lookup_ident(new_trans, new_hash_index, new_label) < 0 ) {
@@ -2652,7 +2658,7 @@ int t_exit_ctx(struct cell * new_trans, enum route_mode new_rmode){
 	crt_trans = get_t();
 	UNREF(crt_trans);
 
-	set_t(new_trans);
+	set_t(new_trans, T_BR_UNDEFINED);
 	set_rmode(new_rmode);
 
 	return 0;

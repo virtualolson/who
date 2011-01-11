@@ -21,6 +21,6 @@ LIBS += -L$(LOCALBASE)/lib -L/usr/pkg/lib -lxml2
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/lost/lost_client \
 
-#MOD_INSTALL_CFGS=ecscf.cfg
+MOD_INSTALL_CFGS=ecscf.cfg
 
 include ../../Makefile.modules

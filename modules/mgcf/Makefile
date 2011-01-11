@@ -17,6 +17,8 @@ SERLIBPATH=../../lib
 INCLUDES = -I../../lib -I../..
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/cds/ser_cds
 
+MOD_INSTALL_CFGS=mgcf.cfg
+
 include ../../Makefile.modules
 
 #DEFS += -DWITH_IMS_PM

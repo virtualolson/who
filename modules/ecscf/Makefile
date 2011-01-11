@@ -9,6 +9,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=ecscf.so
 
+DEFS+=-DSER
 DEFS+=-DSER_MOD_INTERFACE
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/lost/lost_client

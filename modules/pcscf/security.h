@@ -68,10 +68,6 @@ int P_security_200(struct sip_msg *rpl,char *str1, char *str2);
 
 void P_security_drop(r_contact *c,r_security *s);
 
-		
-int P_check_via_sent_by(struct sip_msg *msg,char *str1, char *str2);
-int P_add_via_received(struct sip_msg *msg,char *str1, char *str2);		
-
 int P_follows_via_list(struct sip_msg *rpl,char *str1, char *str2);
 int P_enforce_via_list(struct sip_msg *rpl,char *str1, char *str2);
 int P_remove_header_tag(struct sip_msg *msg,char *str1, char *str2);

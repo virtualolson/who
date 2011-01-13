@@ -377,9 +377,6 @@ static cmd_export_t pcscf_cmds[]={
 	
 	{"P_trans_in_processing",		P_trans_in_processing, 		0, 0, REQUEST_ROUTE},
 
-	{"P_check_via_sent_by",			P_check_via_sent_by, 		0, 0, REQUEST_ROUTE},
-	{"P_add_via_received",			P_add_via_received, 		0, 0, REQUEST_ROUTE},
-	
 	{"P_follows_via_list",			P_follows_via_list, 		0, 0, ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"P_enforce_via_list",			P_enforce_via_list, 		0, 0, ONREPLY_ROUTE|FAILURE_ROUTE},
 

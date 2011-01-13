@@ -991,50 +991,6 @@ void P_security_drop(r_contact *c,r_security *s)
 	}
 }
 
-
-/**
- * Checks if the sent-by parameter in the first Via header equals the source IP address of the message
- * @param req - the SIP request
- * @param str1 - not used
- * @param str2 - not used
- * @returns true if ok, false if not or error
- */
-int P_check_via_sent_by(struct sip_msg *msg,char *str1, char *str2)
-{
-	int ret = CSCF_RETURN_FALSE;
-	struct ip_addr *src_ip;
-	char *src_ip_ch;
-	str sent_by={0,0};
-
-
-	/* get the real receive IP address */
-	src_ip = &(msg->rcv.src_ip);
-	src_ip_ch = ip_addr2a(src_ip);
-	LOG(L_DBG,"DBG:"M_NAME":P_check_sent_by(): Received from <%s>\n",src_ip_ch);			 
-
-	/* find the sent-by Via parameter */
-	sent_by = cscf_get_last_via_sent_by(msg);
-	LOG(L_DBG,"DBG:"M_NAME":P_check_sent_by(): Via sent-by=<%.*s>\n",sent_by.len,sent_by.s);
-			
-	/* if not found, exit now */	
-	if (sent_by.len == 0) {
-		LOG(L_DBG,"DBG:"M_NAME":P_check_sent_by(): Via does not contain a sent-by value\n");
-		return ret;
-	}		
-	
-	/* if found, check if it is matching */
-	if (sent_by.len==strlen(src_ip_ch) &&
-		strncasecmp(sent_by.s,src_ip_ch,sent_by.len)==0){
-			ret = CSCF_RETURN_TRUE;
-			LOG(L_DBG,"DBG:"M_NAME":P_check_sent_by(): sent-by matches the actual IP received from\n");
-	}else{
-		ret = CSCF_RETURN_FALSE;
-		LOG(L_DBG,"DBG:"M_NAME":P_check_sent_by(): sent-by does not match the actual IP received from\n");
-	}	
-	return ret;
-}
-
-
 /**
  * Checks if a response coming from a UE contains the same Via headers sent in the corresponding request
  * @param rpl - the SIP reply
@@ -1310,74 +1266,6 @@ int P_enforce_record_routes(struct sip_msg *msg,char *str1, char *str2)
 out_of_memory:
 	return CSCF_RETURN_ERROR;
 }
-
-
-static str s_received={";received=",10};
-static str s_received2={"received",8};
-/**
- * Adds a received parameter to the first via with the source IP of the message.
- * @param req - the SIP request
- * @param str1 - not used
- * @param str2 - not used
- * @returns true if ok, false if not or error
- */
-int P_add_via_received(struct sip_msg *msg,char *str1, char *str2)
-{
-	struct via_body *via;
-	struct via_param *vp;
-	str received={0,0};
-	struct ip_addr *src_ip;
-	char *src_ip_ch;
-	int len;
-	struct lump* anchor,*l;
-	char *x;
-	
-	/* first add a received parameter */
-	via = msg->via1;
-	
-	/* if we already have a received header, SER will take care of it and put the right value */	
-	if (via->received) goto delete_others;
-	
-	x = via->port_str.s+via->port_str.len;
-	if (!x) x= via->host.s+via->host.len;
-	anchor = anchor_lump(msg, x-msg->buf, 0 , 0 );
-	if (anchor == NULL) {
-		LOG(L_ERR, "ERR:"M_NAME":P_add_via_received(): anchor_lump failed\n");
-		return 0;
-	}
-	
-	src_ip = &(msg->rcv.src_ip);
-	src_ip_ch = ip_addr2a(src_ip);
-	len = strlen(src_ip_ch);
-	received.len = s_received.len+len;	
-	received.s = pkg_malloc(received.len);
-	
-	if (!received.s){
-		LOG(L_ERR, "ERR:"M_NAME":P_add_via_received(): allocating %d bytes\n",received.len);
-		return CSCF_RETURN_ERROR;
-	}
-	memcpy(received.s,s_received.s,s_received.len);
-	memcpy(received.s+s_received.len,src_ip_ch,len);
-	
-	if (!(l=insert_new_lump_before(anchor, received.s,received.len,0))){
-		LOG(L_ERR, "ERR:"M_NAME":P_add_via_received(): error creating lump for received parameter\n" );
-		return CSCF_RETURN_ERROR;
-	}	
-	
-	/* then remove the old received params*/
-delete_others:	
-	for(vp = via->param_lst; vp; vp = vp->next)
-		if (vp->name.len == s_received2.len &&
-			strncasecmp(vp->name.s,s_received2.s,s_received2.len)==0){
-				LOG(L_ERR, "ERR:"M_NAME":P_add_via_received(): Found old received parameter!! This might indicate an attack.\n" );
-				if (!del_lump(msg,vp->start-msg->buf-1,vp->size+1,0)){
-					LOG(L_ERR,"ERR:"M_NAME":P_add_via_received(): Error deleting old received parameter from first via\n");
-					return CSCF_RETURN_ERROR;		
-				}		
-			}	
-	return CSCF_RETURN_TRUE;
-}
-
 
 /**
  * Remove from <str1> headers the <str2> tag

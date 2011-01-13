@@ -318,7 +318,12 @@ pv_get_route_uri_f(struct sip_msg *msg, pv_param_t *param,
 	rr_t* rt;
 	str uri;
 
-	/* Parse the header until the First-Route-Header: */
+	if (!msg) {
+		LM_ERR("No message?!?\n");
+		return -1;
+	}
+
+	/* Parse the message until the First-Route-Header: */
 	if (parse_headers(msg, HDR_ROUTE_F, 0) == -1) {
 		LM_ERR("while parsing message\n");
 		return -1;
@@ -328,9 +333,16 @@ pv_get_route_uri_f(struct sip_msg *msg, pv_param_t *param,
 		LM_INFO("No route header present.\n");
 		return -1;
 	}
+	hdr = msg->route;
+
+	/* Parse the contents of the header: */
+	if (parse_rr(hdr) == -1) {
+		LM_ERR("Error while parsing Route header\n");
+                return -1;
+	}
+
 
 	/* Retrieve the Route-Header */	
-	hdr = msg->route;
 	rt = (rr_t*)hdr->parsed;
 	uri = rt->nameaddr.uri;
 

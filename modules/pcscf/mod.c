@@ -347,8 +347,6 @@ static cmd_export_t pcscf_cmds[]={
 
 	{"P_process_notification",		P_process_notification, 	0, 0, REQUEST_ROUTE},
 
-	{"P_remove_route",				P_remove_route, 			1, 0, REQUEST_ROUTE},
-	
 	{"P_NAT_relay", 				P_NAT_relay, 				0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"P_SDP_manipulate", 			P_SDP_manipulate, 			1, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
 	

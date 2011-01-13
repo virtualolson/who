@@ -119,8 +119,8 @@ static param_export_t params[] ={
  * \brief Exported Pseudo variables
  */
 static pv_export_t mod_pvs[] = {
-    {{"route_uri", (sizeof("route_uri")-1)}, /* number of records routes */
-     PVT_CONTEXT, pv_get_route_uri_f, 0, 0, 0, 0, 0},
+    {{"route_uri", (sizeof("route_uri")-1)}, /* URI of the first Route-Header */
+     PVT_OTHER, pv_get_route_uri_f, 0, 0, 0, 0, 0},
     {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 

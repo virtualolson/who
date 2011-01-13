@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="scscf" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice.com</orgname></affiliation>
+		<address>
+		    <email>carsten@ng-voice.com</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2011</year>
+	    <holder>ng-voice.com</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Serving-CSCF Module</title>
+
+    <section id="scscf.overview">
+	<title>Overview</title>
+	<para>
+(Serving Call-/Session Control Function)
+
+The S-CSCF implementation also communicates with the HSS using Diameter (over the Cx interface) to retrieve authentication vectors, update registration information and download the user profiles as specified in 3GPP TS 29.228 (“IP Multimedia (IM) Subsystem Cx and Dx interfaces; Signaling flows and message contents”, (Release 6)). The S-CSCF can apply the user profile based initial Filter Criteria (iFC) to enforce specific SIP routing rules. It implements support for carrying out the IMS Digest AKA version 1 (RFC 3310: A. Niemi, J. Arkko, V. Torvinen: “Hypertext Transfer Protocol (HTTP) Digest Authentication Using Authentication and Key Agreement (AKA)”, September 2002). Rather than generating authentication vectors it relies on the HSS for this task and compares these values to the ones calculated in the UE.
+
+For fast response times with minimal locking, the registrar of the S-CSCF has a complex structure based on hash-tables. The information that is required to relate a user identity to a physical UE is stored here and used further on for call routing. It also accepts subscriptions to registration state events and notifies the subscribers about changes in the registrar.
+	</para>
+    </section>
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>
+

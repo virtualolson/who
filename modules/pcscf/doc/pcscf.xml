@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="pcscf" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice.com</orgname></affiliation>
+		<address>
+		    <email>carsten@ng-voice.com</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2011</year>
+	    <holder>ng-voice.com</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Proxy-CSCF Module</title>
+
+    <section id="pcscf.overview">
+	<title>Overview</title>
+	<para>
+The P-CSCF is the entry point to the IMS domain and serves as the outbound proxy server for the UE. The UE attaches to the P-CSCF prior to performing IMS registrations and initiating SIP sessions. The P-CSCF may be in the home domain of the IMS operator, or it may be in the visiting domain, where the UE is currently roaming. For attachment to a given P-CSCF, the UE performs the P-CSCF discovery procedures. Attachment to the P-CSCF is necessary for the UE for initiating IMS registrations and sessions.
+
+In these procedures, the UE first establishes the IP connectivity access network (IP-CAN) bearer. Then, the UE sends a query to the DHCP server for retrieving the IP addresses and FQDN (Fully Qualified Domain Name) of the P-CSCF. After the DHCP query, the UE performs a DNS query on the FQDN received from the DHCP server. In response to the DNS query, the IP address of the P-CSCF is returned. This is known as the DHCP-DNS procedure for P-CSCF discovery. However, in some cases, it may be possible that the FQDN of the P-CSCF is pre-configured in the UE. In these scenarios, the UE can directly query the DNS server and get the IP address of the P-CSCF.
+
+The P-CSCF also translates the SDP body contained in the SIP INVITE message from the UE into DIAMETER over the Rx interface and sends it to the PCRF. The PCRF is responsible for policy control in the IMS core network. If the SDP offer contains a codec or any other media characteristics that are not allowed as per the policies of the IMS operator, the operator can choose to disallow that session setup.
+
+In the current implementation of the Open Source IMS Core, the P-CSCF component is able to firewall the core network at the application level: only registered endpoints are allowed to insert messages inside the IMS network and the P-CSCF asserts the identity of the users. For this, upon registration, the P-CSCF establishes secured channels individually for each User Endpoint (UE) that it services. To keep track of the registered users, it has an internal reversed-registrar that is updated by intercepting the registration process and later by subscribing in User Agent Client (UAC) mode to the registration package at the S-CSCF and receiving notifications. The actual data is kept in a hash-table to allow fast retrieval.
+
+For originating call signaling it generates unique charging vectors and inserts network and path identifiers that are needed for the correct further processing of the SIP messages. UE forged information that might lead to an attack is removed and/or corrected. After a successful registration process to an IMS home network, subsequent user messages are forwarded based on DNS information towards the requested IMS home network. Regarding NAT issues for the SIP signaling, in the outgoing direction, towards the user endpoints, it can act as a router by simply being active in both networks. Also, NAT traversal modules were adapted for the specific user location storage mechanisms.
+	</para>
+    </section>
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>
+

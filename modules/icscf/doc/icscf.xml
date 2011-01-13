@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="icscf" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice.com</orgname></affiliation>
+		<address>
+		    <email>carsten@ng-voice.com</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2011</year>
+	    <holder>ng-voice.com</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Interrogating-CSCF Module</title>
+
+    <section id="icscf.overview">
+	<title>Overview</title>
+	<para>
+(Interrogating Call-/Session Control Function)
+
+The Interrogating-CSCF (I-CSCF) has the role of a stateless proxy that, by using the indicated public identities of the caller or the callee, queries the Home Subscriber Server (HSS) and based on responses routes the message to the correct S-CSCF. It implements the Cx interface [1] of an I-CSCF to the HSS. Therefore it supports the required Diameter commands to locate the user-assigned S-CSCF or to select, based on capabilities, a new S-CSCF and check identities, roaming authorizations as specified in 3GPP TS 29.228.
+
+After receiving a successful answer for the Diameter query the I-CSCF forwards the SIP messages in a transactional mode. It is optimized for speed and minimalist state information is kept in it. To protect the home network, it has a firewalling capacity that only allows signaling messages coming from trusted networks through Network Domain Security (NDS).
+	</para>
+    </section>
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>
+

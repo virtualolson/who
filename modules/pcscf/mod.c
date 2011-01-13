@@ -278,10 +278,6 @@ uint32_t gg_af_port = 0;
  * <p>
  * - P_process_notification() - process a NOTIFY for the reg event
  * <p>
- * - P_mobile_terminating() - checks if the request contains the Routes indicating a terminating case,
- * as specified in the Path header at registration
- * - P_remove_route() - remove a route header - deprecated, loose_route() should do the job
- * <p>
  * - P_NAT_relay() - forward a message through a NAT
  * - P_SDP_manipulate() - manipulate a SDP to pipe the media through the RTP Proxy (for NAT)
  * <p>
@@ -302,9 +298,6 @@ uint32_t gg_af_port = 0;
  * - P_assert_called_identity() - asserts the called identity by adding the P-Asserted-Identity header
  * <p>
  * - P_trans_in_processing() - checks if the transaction is already in processing
- * <p>
- * - P_check_via_sent_by() - checks if the sent-by parameter in the first Via header equals the source IP address of the message
- * - P_add_via_received() - adds a received parameter to the first via header with the srouce IP address 
  * <p>
  * - P_follows_via_list() - checks if a response coming from a UE contains the same Via headers sent in the corresponding request
  * - P_enforce_via_list() - enforce a response coming from a UE to contain the same Via headers sent in the corresponding request
@@ -354,7 +347,6 @@ static cmd_export_t pcscf_cmds[]={
 
 	{"P_process_notification",		P_process_notification, 	0, 0, REQUEST_ROUTE},
 
-	{"P_mobile_terminating",		P_mobile_terminating, 		0, 0, REQUEST_ROUTE},
 	{"P_remove_route",				P_remove_route, 			1, 0, REQUEST_ROUTE},
 	
 	{"P_NAT_relay", 				P_NAT_relay, 				0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},

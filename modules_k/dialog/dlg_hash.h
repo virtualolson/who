@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2006 Voice System SRL
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -112,6 +113,7 @@ struct dlg_cell
 	struct socket_info * bind_addr[2];	/*! binded address of caller and callee */
 	struct dlg_head_cbl  cbs;		/*!< dialog callbacks */
 	struct dlg_profile_link *profile_links; /*!< dialog profiles */
+	struct dlg_var       *vars;		/*!< dialog variables */
 };
 
 
@@ -157,7 +159,6 @@ extern struct dlg_cell  *current_dlg_pointer;
  */
 #define dlg_unlock(_table, _entry) \
 		lock_set_release( (_table)->locks, (_entry)->lock_idx);
-
 
 /*!
  * \brief Unlink a dialog from the list without locking

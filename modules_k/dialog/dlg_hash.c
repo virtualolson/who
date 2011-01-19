@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2006 Voice System SRL
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -58,6 +59,7 @@
 #include "../../lib/kcore/hash_func.h"
 #include "../../lib/kmi/mi.h"
 #include "dlg_timer.h"
+#include "dlg_var.h"
 #include "dlg_hash.h"
 #include "dlg_profile.h"
 #include "dlg_req_within.h"
@@ -132,6 +134,7 @@ error0:
 inline void destroy_dlg(struct dlg_cell *dlg)
 {
 	int ret = 0;
+	struct dlg_var *var;
 
 	LM_DBG("destroying dialog %p\n",dlg);
 
@@ -177,6 +180,16 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 
 	if (dlg->toroute_name.s)
 		shm_free(dlg->toroute_name.s);
+
+	
+	while (dlg->vars) {
+		var = dlg->vars;
+		dlg->vars = dlg->vars->next;
+		shm_free(var->key.s);
+		shm_free(var->key.s);
+		shm_free(var);
+	}
+
 
 	shm_free(dlg);
 	dlg = 0;
@@ -1130,4 +1143,5 @@ error:
 	free_mi_tree(rpl_tree);
 	return NULL;
 }
+
 

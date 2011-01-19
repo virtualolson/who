@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
  * This file is part of kamailio, a free SIP server.
  *
@@ -39,6 +40,22 @@ typedef struct _dlg_ctx {
 	int set;
 	unsigned int dir;
 } dlg_ctx_t;
+
+/* A dialog-variable */
+struct dlg_var {
+	str key;
+	str value;
+	struct dlg_var *next;
+};
+
+
+int pv_parse_dialog_var_name(pv_spec_p sp, str *in);
+
+int pv_get_dialog_var(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res);
+
+int pv_set_dialog_var(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
 
 extern dlg_ctx_t _dlg_ctx;
 

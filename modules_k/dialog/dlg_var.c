@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
  * This file is part of kamailio, a free SIP server.
  *
@@ -23,6 +24,8 @@
 #include "../../route.h"
 
 #include "dlg_var.h"
+#include "dlg_hash.h"
+#include "dlg_profile.h"
 
 dlg_ctx_t _dlg_ctx;
 
@@ -32,6 +35,181 @@ int dlg_cfg_cb(struct sip_msg *foo, unsigned int flags, void *bar)
 
 	return 1;
 }
+
+
+static inline struct dlg_var *new_dlg_var(str *key, str *val)
+{
+	struct dlg_var *var;
+
+	var =(struct dlg_var*)shm_malloc(sizeof(struct dlg_var));
+	if (var==NULL) {
+		LM_ERR("no more shm mem\n");
+		return NULL;
+	}
+	var->next = NULL;
+	/* set key */
+	var->key.len = key->len;
+	var->key.s = (char*)shm_malloc(var->key.len);
+	if (var->key.s==NULL) {
+		shm_free(var);			
+		LM_ERR("no more shm mem\n");
+		return NULL;
+	}
+	memcpy(var->key.s, key->s, key->len);
+	/* set value */
+	var->value.len = val->len;
+	var->value.s = (char*)shm_malloc(var->value.len);
+	if (var->value.s==NULL) {
+		shm_free(var->key.s);			
+		shm_free(var);			
+		LM_ERR("no more shm mem\n");
+		return NULL;
+	}
+	memcpy(var->value.s, val->s, val->len);
+	return var;
+}
+
+/* Adds, updates and deletes dialog variables */
+int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
+{
+	struct dlg_var * var = NULL;
+	struct dlg_var * it;
+	struct dlg_var * it_prev;
+
+	if ( val && (var=new_dlg_var(key, val))==NULL) {
+		LM_ERR("failed to create new dialog variable\n");
+		return -1;
+	}
+
+	/* lock dialog */
+	dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+
+	/* iterate the list */
+	for( it_prev=NULL, it=dlg->vars ; it ; it_prev=it,it=it->next) {
+		if (key->len==it->key.len && memcmp(key->s,it->key.s,key->len)==0) {
+			/* found -> replace or delete it */
+			if (val==NULL) {
+				/* delete it */
+				if (it_prev) it_prev->next = it->next;
+				else dlg->vars = it->next;
+			} else {
+				/* replace the current it with var and free the it */
+				var->next = it->next;
+				if (it_prev) it_prev->next = var;
+				else dlg->vars = var;
+			}
+
+			/* unlock dialog */
+			dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+		
+			/* Free this var: */
+			shm_free(it->key.s);
+			shm_free(it->value.s);
+			shm_free(it);
+			return 0;
+		}
+	}
+
+	/* not found -> simply add a new one */
+
+	/* insert at the beginning of the list */
+	var->next = dlg->vars;
+	dlg->vars = var;
+
+	/* unlock dialog */
+	dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+
+	return 0;
+}
+
+str * get_dlg_variable(struct dlg_cell *dlg, str *key)
+{
+	struct dlg_var *var;
+
+	/* lock dialog */
+	dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+
+	/* iterate the list */
+	for(var=dlg->vars ; var ; var=var->next) {
+		if (key->len==var->key.len && memcmp(key->s,var->key.s,key->len)==0) {
+			/* unlock dialog */
+			dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+			return &var->value;
+		}
+	}
+
+	/* unlock dialog */
+	dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+
+	return NULL;
+}
+
+int pv_parse_dialog_var_name(pv_spec_p sp, str *in)
+{
+	if(in==NULL || in->s==NULL || sp==NULL)
+		return -1;
+
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
+	sp->pvp.pvn.u.isname.name.s = *in;
+
+	return 0;
+}
+
+
+int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	struct dlg_cell *dlg;
+	str * value;
+
+	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR || param->pvn.u.isname.type!=AVP_NAME_STR || param->pvn.u.isname.name.s.s==NULL) {
+		LM_CRIT("BUG - bad parameters\n");
+		return -1;
+	}
+
+	if ((dlg=get_current_dlg_pointer())==NULL)
+		return pv_get_null(msg, param, res);
+
+	value = get_dlg_variable(dlg, &param->pvn.u.isname.name.s);
+	if (value)
+		return pv_get_strval(msg, param, res, value);
+	return 0;
+}
+
+int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val)
+{
+	struct dlg_cell *dlg;
+
+	if ( (dlg=get_current_dlg_pointer())==NULL )
+		return -1;
+
+	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR || param->pvn.u.isname.type!=AVP_NAME_STR || param->pvn.u.isname.name.s.s==NULL ) {
+		LM_CRIT("BUG - bad parameters\n");
+		return -1;
+	}
+
+	if (val==NULL || val->flags&(PV_VAL_NONE|PV_VAL_NULL|PV_VAL_EMPTY)) {
+		/* if NULL, remove the value */
+		if (set_dlg_variable(dlg, &param->pvn.u.isname.name.s, NULL)!=0) {
+			LM_ERR("failed to delete dialog variable <%.*s>\n", param->pvn.u.isname.name.s.len,param->pvn.u.isname.name.s.s);
+			return -1;
+		}
+	} else {
+		/* if value, must be string */
+		if ( !(val->flags&PV_VAL_STR)) {
+			LM_ERR("non-string values are not supported\n");
+			return -1;
+		}
+
+		if (set_dlg_variable(dlg, &param->pvn.u.isname.name.s, &val->rs)!=0) {
+			LM_ERR("failed to store dialog values <%.*s>\n",param->pvn.u.isname.name.s.len,param->pvn.u.isname.name.s.s);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 
 int pv_get_dlg_ctx(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)

@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2007 Voice System SRL
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -63,6 +64,12 @@ str toroute_name_column		=	str_init(TOROUTE_NAME_COL);
 str req_uri_column			=	str_init(REQ_URI_COL);
 str dialog_table_name		=	str_init(DIALOG_TABLE_NAME);
 int dlg_db_mode				=	DB_MODE_NONE;
+
+str vars_h_id_column		=	str_init(VARS_HASH_ID_COL);
+str vars_h_entry_column		=	str_init(VARS_HASH_ENTRY_COL);
+str vars_key_column		=	str_init(VARS_KEY_COL);
+str vars_value_column		=	str_init(VARS_VALUE_COL);
+str dialog_vars_table_name	=	str_init(DIALOG_VARS_TABLE_NAME);
 
 static db1_con_t* dialog_db_handle    = 0; /* database connection handle */
 static db_func_t dialog_dbf;
@@ -137,7 +144,12 @@ int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int
 	}
 
 	if(db_check_table_version(&dialog_dbf, dialog_db_handle, &dialog_table_name, DLG_TABLE_VERSION) < 0) {
-		LM_ERR("error during table version check.\n");
+		LM_ERR("error during dialog-table version check.\n");
+		return -1;
+	}
+
+	if(db_check_table_version(&dialog_dbf, dialog_db_handle, &dialog_vars_table_name, DLG_VARS_TABLE_VERSION) < 0) {
+		LM_ERR("error during dialog-vars version check.\n");
 		return -1;
 	}
 

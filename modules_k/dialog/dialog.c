@@ -4,6 +4,7 @@
  * dialog module - basic support for dialog tracking
  *
  * Copyright (C) 2006 Voice Sistem SRL
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -214,6 +215,13 @@ static param_export_t mod_params[]={
 	{ "from_sock_column",      STR_PARAM, &from_sock_column.s       },
 	{ "sflags_column",         STR_PARAM, &sflags_column.s          },
 	{ "toroute_name_column",   STR_PARAM, &toroute_name_column.s    },
+
+	{ "vars_table_name",       STR_PARAM, &dialog_vars_table_name   },
+	{ "vars_h_id_column",      STR_PARAM, &vars_h_id_column.s       },
+	{ "vars_h_entry_column",   STR_PARAM, &vars_h_entry_column.s    },
+	{ "vars_key_column",       STR_PARAM, &vars_key_column.s        },
+	{ "vars_value_column",     STR_PARAM, &vars_value_column.s      },
+
 	{ "db_update_period",      INT_PARAM, &db_update_period         },
 	{ "db_fetch_rows",         INT_PARAM, &db_fetch_rows            },
 	{ "profiles_with_value",   STR_PARAM, &profiles_wv_s            },
@@ -259,6 +267,8 @@ static pv_export_t mod_items[] = {
 		pv_set_dlg_ctx, pv_parse_dlg_ctx_name, 0, 0, 0 },
 	{ {"dlg",  sizeof("dlg")-1}, PVT_OTHER, pv_get_dlg,
 		0, pv_parse_dlg_name, 0, 0, 0 },
+	{ {"dlg_var", sizeof("dlg_var")-1}, PVT_OTHER, pv_get_dialog_var,
+		pv_set_dialog_var,    pv_parse_dialog_var_name, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -429,6 +439,12 @@ static int mod_init(void)
 	sflags_column.len = strlen(sflags_column.s);
 	toroute_name_column.len = strlen(toroute_name_column.s);
 	dialog_table_name.len = strlen(dialog_table_name.s);
+
+	dialog_vars_table_name.len = strlen(dialog_vars_table_name.s);
+	vars_h_id_column.len = strlen(vars_h_id_column.s);
+	vars_h_entry_column.len = strlen(vars_h_entry_column.s);
+	vars_key_column.len = strlen(vars_key_column.s);
+	vars_value_column.len = strlen(vars_value_column.s);
 
 	/* param checkings */
 	if (dlg_flag==-1) {

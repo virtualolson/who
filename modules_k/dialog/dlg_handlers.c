@@ -679,6 +679,8 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 		return -1;
 	}
 
+	
+
 	/* save caller's tag, cseq, contact and record route*/
 	if (populate_leg_info(dlg, msg, t, DLG_CALLER_LEG,
 			&(get_from(msg)->tag_value)) !=0)
@@ -690,6 +692,9 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 
 	set_current_dialog(msg, dlg);
 	_dlg_ctx.dlg = dlg;
+	/* Populate initial varlist: */
+	dlg->vars = getvarlist(msg);
+	deletevarlist();
 
 	link_dlg(dlg, 2/* extra ref for the callback and current dlg hook */);
 

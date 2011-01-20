@@ -29,6 +29,11 @@
 
 dlg_ctx_t _dlg_ctx;
 
+/*! global variable table, in case the dialog does not exist yet */
+struct dlg_var * var_table = 0;
+/*! ID of the current message */
+int msg_id;
+
 int dlg_cfg_cb(struct sip_msg *foo, unsigned int flags, void *bar)
 {
 	memset(&_dlg_ctx, 0, sizeof(dlg_ctx_t));
@@ -70,7 +75,7 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 }
 
 /* Adds, updates and deletes dialog variables */
-int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
+int set_dlg_variable_unsafe(struct dlg_var * var_list, str *key, str *val)
 {
 	struct dlg_var * var = NULL;
 	struct dlg_var * it;
@@ -81,27 +86,21 @@ int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
 		return -1;
 	}
 
-	/* lock dialog */
-	dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
-
 	/* iterate the list */
-	for( it_prev=NULL, it=dlg->vars ; it ; it_prev=it,it=it->next) {
+	for( it_prev=NULL, it=var_list ; it ; it_prev=it,it=it->next) {
 		if (key->len==it->key.len && memcmp(key->s,it->key.s,key->len)==0) {
 			/* found -> replace or delete it */
 			if (val==NULL) {
 				/* delete it */
 				if (it_prev) it_prev->next = it->next;
-				else dlg->vars = it->next;
+				else var_list = it->next;
 			} else {
 				/* replace the current it with var and free the it */
 				var->next = it->next;
 				if (it_prev) it_prev->next = var;
-				else dlg->vars = var;
+				else var_list = var;
 			}
 
-			/* unlock dialog */
-			dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
-		
 			/* Free this var: */
 			shm_free(it->key.s);
 			shm_free(it->value.s);
@@ -113,33 +112,22 @@ int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
 	/* not found -> simply add a new one */
 
 	/* insert at the beginning of the list */
-	var->next = dlg->vars;
-	dlg->vars = var;
-
-	/* unlock dialog */
-	dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+	var->next = var_list;
+	var_list = var;
 
 	return 0;
 }
 
-str * get_dlg_variable(struct dlg_cell *dlg, str *key)
+str * get_dlg_variable_unsafe(struct dlg_var * var_list, str *key)
 {
 	struct dlg_var *var;
 
-	/* lock dialog */
-	dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
-
 	/* iterate the list */
-	for(var=dlg->vars ; var ; var=var->next) {
+	for(var=var_list ; var ; var=var->next) {
 		if (key->len==var->key.len && memcmp(key->s,var->key.s,key->len)==0) {
-			/* unlock dialog */
-			dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 			return &var->value;
 		}
 	}
-
-	/* unlock dialog */
-	dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 
 	return NULL;
 }
@@ -156,10 +144,30 @@ int pv_parse_dialog_var_name(pv_spec_p sp, str *in)
 	return 0;
 }
 
+/*! Delete the current var-list */
+void deletevarlist() {
+	struct dlg_var *var;
+	while (var_table) {
+		var = var_table;
+		var_table = var_table->next;
+		shm_free(var->key.s);
+		shm_free(var->key.s);
+		shm_free(var);
+	}
+}
+
+/*! Retrieve the current var-list */
+struct dlg_var * getvarlist(struct sip_msg *msg) {
+	/* New list, delete the old one */
+	if (msg->id != msg_id)
+		deletevarlist();
+	return var_table;
+}
 
 int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	struct dlg_cell *dlg;
+	struct dlg_var *varlist;
 	str * value;
 
 	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR || param->pvn.u.isname.type!=AVP_NAME_STR || param->pvn.u.isname.name.s.s==NULL) {
@@ -168,9 +176,18 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 	if ((dlg=get_current_dlg_pointer())==NULL)
-		return pv_get_null(msg, param, res);
+		varlist = getvarlist(msg);
+	else
+		varlist = dlg->vars;
 
-	value = get_dlg_variable(dlg, &param->pvn.u.isname.name.s);
+	/* unlock dialog */
+	if (dlg) dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+
+	value = get_dlg_variable_unsafe(varlist, &param->pvn.u.isname.name.s);
+
+	/* unlock dialog */
+	if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+
 	if (value)
 		return pv_get_strval(msg, param, res, value);
 	return 0;
@@ -179,9 +196,12 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val)
 {
 	struct dlg_cell *dlg;
+	struct dlg_var *varlist;
 
-	if ( (dlg=get_current_dlg_pointer())==NULL )
-		return -1;
+	if ((dlg=get_current_dlg_pointer())==NULL)
+		varlist = getvarlist(msg);
+	else
+		varlist = dlg->vars;
 
 	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR || param->pvn.u.isname.type!=AVP_NAME_STR || param->pvn.u.isname.name.s.s==NULL ) {
 		LM_CRIT("BUG - bad parameters\n");
@@ -190,26 +210,31 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 
 	if (val==NULL || val->flags&(PV_VAL_NONE|PV_VAL_NULL|PV_VAL_EMPTY)) {
 		/* if NULL, remove the value */
-		if (set_dlg_variable(dlg, &param->pvn.u.isname.name.s, NULL)!=0) {
+		if (set_dlg_variable_unsafe(varlist, &param->pvn.u.isname.name.s, NULL)!=0) {
 			LM_ERR("failed to delete dialog variable <%.*s>\n", param->pvn.u.isname.name.s.len,param->pvn.u.isname.name.s.s);
+			/* unlock dialog */
+			if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 			return -1;
 		}
 	} else {
 		/* if value, must be string */
 		if ( !(val->flags&PV_VAL_STR)) {
 			LM_ERR("non-string values are not supported\n");
+			/* unlock dialog */
+			if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 			return -1;
 		}
 
-		if (set_dlg_variable(dlg, &param->pvn.u.isname.name.s, &val->rs)!=0) {
+		if (set_dlg_variable_unsafe(varlist, &param->pvn.u.isname.name.s, &val->rs)!=0) {
 			LM_ERR("failed to store dialog values <%.*s>\n",param->pvn.u.isname.name.s.len,param->pvn.u.isname.name.s.s);
+			/* unlock dialog */
+			if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 			return -1;
 		}
 	}
 
 	return 0;
 }
-
 
 int pv_get_dlg_ctx(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)

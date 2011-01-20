@@ -57,6 +57,12 @@ int pv_get_dialog_var(struct sip_msg *msg,  pv_param_t *param,
 int pv_set_dialog_var(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
 
+/*! Delete the current var-list */
+void deletevarlist();
+
+/*! Retrieve the current var-list */
+struct dlg_var * getvarlist(struct sip_msg *msg);
+
 extern dlg_ctx_t _dlg_ctx;
 
 int pv_get_dlg_ctx(struct sip_msg *msg,  pv_param_t *param,

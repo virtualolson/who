@@ -71,7 +71,7 @@
 	do {\
 		sem_ptr=shm_malloc(sizeof(gen_sem_t));\
 		if (!sem_ptr){\
-			LOG(L_ERR,"Error allocating %d bytes of shm!\n",sizeof(gen_sem_t));\
+			LOG(L_ERR,"Error allocating %lu bytes of shm!\n",(unsigned long)sizeof(gen_sem_t));\
 			goto out_of_memory;\
 		}	\
 		if (sem_init(sem_ptr, 1, value)<0) {\

@@ -89,9 +89,9 @@
 
 #ifndef LOG_NO_MEM
 	#define LOG_NO_MEM(mem_type,data_len) \
-		LOG(L_ERR,"ERROR:%s:%s()[%d]: Out of %s memory allocating %d bytes\n",\
+		LOG(L_ERR,"ERROR:%s:%s()[%d]: Out of %s memory allocating %lu bytes\n",\
 			__FILE__,__FUNCTION__,__LINE__, \
-			mem_type,data_len);
+			mem_type,(long unsigned)data_len);
 #endif
 
 

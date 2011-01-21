@@ -45,6 +45,7 @@ typedef struct _dlg_ctx {
 struct dlg_var {
 	str key;
 	str value;
+	unsigned int vflags;		/*!< internal variable flags */
 	struct dlg_var *next;
 };
 
@@ -62,6 +63,9 @@ void deletevarlist();
 
 /*! Retrieve the current var-list */
 struct dlg_var * getvarlist(struct sip_msg *msg);
+
+/* Adds, updates and deletes dialog variables */
+int set_dlg_variable_unsafe(struct dlg_var * var_list, str *key, str *val, int new);
 
 extern dlg_ctx_t _dlg_ctx;
 

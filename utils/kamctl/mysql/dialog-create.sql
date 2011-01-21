@@ -24,6 +24,12 @@ CREATE TABLE dialog (
     toroute_name VARCHAR(32),
     req_uri VARCHAR(128) NOT NULL
 ) ENGINE=MyISAM;
-
 CREATE INDEX hash_idx ON dialog (hash_entry, hash_id);
+INSERT INTO version (table_name, table_version) values ('dialog_vars','1');
+CREATE TABLE dialog_vars (
+    hash_entry INT(10) UNSIGNED NOT NULL,
+    hash_id INT(10) UNSIGNED NOT NULL,
+    key VARCHAR(255) NOT NULL,
+    value VARCHAR(255) NOT NULL,
+) ENGINE=MyISAM;
 

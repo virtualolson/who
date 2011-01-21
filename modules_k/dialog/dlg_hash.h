@@ -76,6 +76,10 @@
 #define DLG_FLAG_CALLERBYE     (1<<4) /*!< bye from caller */
 #define DLG_FLAG_CALLEEBYE     (1<<5) /*!< bye from callee */
 #define DLG_FLAG_LOCALDLG      (1<<6) /*!< local dialog, unused */
+#define DLG_FLAG_CHANGED_VARS  (1<<7) /*!< dialog-variables changed */
+
+/* dialog-variable flags (in addition to dialog-flags) */
+#define DLG_FLAG_DEL           (1<<8) /*!< delete this var */
 
 #define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
 #define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */

@@ -27,3 +27,11 @@ CREATE TABLE dialog (
 
 CREATE INDEX dialog_hash_idx ON dialog (hash_entry, hash_id);
 
+INSERT INTO version (table_name, table_version) values ('dialog_vars','1');
+CREATE TABLE dialog_vars (
+    hash_entry INT(10) UNSIGNED NOT NULL,
+    hash_id INT(10) UNSIGNED NOT NULL,
+    key VARCHAR(255) NOT NULL,
+    value VARCHAR(255) NOT NULL,
+);
+

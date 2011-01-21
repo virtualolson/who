@@ -429,8 +429,8 @@ int send_options_req(str req_uri, str location, str service, struct initial_tr *
 
 	char * p = (char*)shm_malloc(sizeof(struct initial_tr)+sizeof(char)*inv_tr->callid.len);
 	if(!p){
-		LOG(L_ERR,"ERR:"M_NAME":send_options_req: Error allocating cb_par: %d bytes\n",
-				sizeof(struct initial_tr)+sizeof(char)*inv_tr->callid.len);
+		LOG(L_ERR,"ERR:"M_NAME":send_options_req: Error allocating cb_par: %lu bytes\n",
+				(unsigned long)sizeof(struct initial_tr)+sizeof(char)*inv_tr->callid.len);
 		goto error;
 	}
 	cb_par = (struct initial_tr *)p;

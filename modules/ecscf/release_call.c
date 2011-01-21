@@ -493,7 +493,7 @@ int send_request(str method,str reqbuf,dlg_t *d,transaction_cb cb, enum e_dialog
 			 * and the ACK is never replied it would be a bug if i did*/
 			cbp = shm_malloc(sizeof(enum e_dialog_direction));
 			if (!cbp){
-				LOG(L_ERR,"ERR:"M_NAME":send_request(): error allocating %d bytes\n",sizeof(enum e_dialog_direction));
+				LOG(L_ERR,"ERR:"M_NAME":send_request(): error allocating %lu bytes\n",(unsigned long)sizeof(enum e_dialog_direction));
 				return 0;
 			}
 			*cbp=dir;

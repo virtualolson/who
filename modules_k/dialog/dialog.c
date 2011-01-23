@@ -267,8 +267,8 @@ static pv_export_t mod_items[] = {
 		pv_set_dlg_ctx, pv_parse_dlg_ctx_name, 0, 0, 0 },
 	{ {"dlg",  sizeof("dlg")-1}, PVT_OTHER, pv_get_dlg,
 		0, pv_parse_dlg_name, 0, 0, 0 },
-	{ {"dlg_var", sizeof("dlg_var")-1}, PVT_OTHER, pv_get_dialog_var,
-		pv_set_dialog_var,    pv_parse_dialog_var_name, 0, 0, 0},
+	{ {"dlg_var", sizeof("dlg_var")-1}, PVT_OTHER, pv_get_dlg_variable,
+		pv_set_dlg_variable,    pv_parse_dialog_var_name, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 

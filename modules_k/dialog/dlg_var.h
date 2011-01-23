@@ -52,11 +52,9 @@ struct dlg_var {
 
 int pv_parse_dialog_var_name(pv_spec_p sp, str *in);
 
-int pv_get_dialog_var(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
+int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
-int pv_set_dialog_var(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val);
+int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
 
 /*! Delete the current var-list */
 void deletevarlist();

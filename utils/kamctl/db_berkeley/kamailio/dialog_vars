@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-hash_entry(int) hash_id(int) key(str) value(str)
+hash_entry(int) hash_id(int) dialog_key(str) dialog_value(str)
 METADATA_KEY
 1 2 
 METADATA_READONLY

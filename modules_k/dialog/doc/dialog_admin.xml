@@ -961,7 +961,7 @@ modparam("dialog", "vars_h_entry_column", "vars_h_entry_name")
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>key</quote>.
+			Default value is <quote>dialog_key</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -981,7 +981,7 @@ modparam("dialog", "vars_key_column", "vars_key_name")
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>key</quote>.
+			Default value is <quote>dialog_value</quote>.
 		</emphasis>
 		</para>
 		<example>

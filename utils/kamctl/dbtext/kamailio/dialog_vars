@@ -1,1 +1,1 @@
-hash_entry(int) hash_id(int) key(string) value(string)
+hash_entry(int) hash_id(int) dialog_key(string) dialog_value(string)

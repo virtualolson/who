@@ -39,7 +39,7 @@ INSERT INTO version (table_name, table_version) values ('dialog_vars','1');
 CREATE TABLE dialog_vars (
     hash_entry INT(10) UNSIGNED NOT NULL,
     hash_id INT(10) UNSIGNED NOT NULL,
-    key VARCHAR(255) NOT NULL,
-    value VARCHAR(255) NOT NULL,
+    dialog_key VARCHAR(255) NOT NULL,
+    dialog_value VARCHAR(255) NOT NULL,
 );
 

@@ -60,8 +60,8 @@
 
 #define VARS_HASH_ID_COL 		"hash_id"
 #define VARS_HASH_ENTRY_COL		"hash_entry"
-#define VARS_KEY_COL			"key"
-#define VARS_VALUE_COL			"value"
+#define VARS_KEY_COL			"dialog_key"
+#define VARS_VALUE_COL			"dialog_value"
 #define DIALOG_VARS_TABLE_NAME		"dialog_vars"
 #define DLG_VARS_TABLE_VERSION		1
 

@@ -56,14 +56,11 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
 
-/*! Delete the current var-list */
-void deletevarlist();
-
 /*! Retrieve the current var-list */
-struct dlg_var * getvarlist(struct sip_msg *msg);
+struct dlg_var * get_local_varlist_pointer(struct sip_msg *msg, int clear_pointer);
 
 /* Adds, updates and deletes dialog variables */
-int set_dlg_variable_unsafe(struct dlg_var * var_list, str *key, str *val, int new);
+int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val, int new);
 
 extern dlg_ctx_t _dlg_ctx;
 

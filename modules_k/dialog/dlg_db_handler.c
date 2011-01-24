@@ -519,7 +519,7 @@ static int load_dialog_vars_from_db(int fetch_num_rows)
 				dlg = (d_table->entries)[VAL_INT(values)].first;
 				while (dlg) {
 					if (dlg->h_id == VAL_INT(values+1)) {
-						set_dlg_variable_unsafe(dlg->vars, &VAL_STR(values+2), &VAL_STR(values+3), 0);
+						set_dlg_variable_unsafe(dlg, &VAL_STR(values+2), &VAL_STR(values+3), 0);
 						continue;
 					}
 					dlg = dlg->next;
@@ -678,6 +678,8 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 			if (update_dialog_vars_dbinfo(cell, var) != 0)
 				return -1;
 		}
+		/* Remove the flag */
+		cell->dflags &= ~DLG_FLAG_CHANGED_VARS;
 	}
 
 	if(use_dialog_table()!=0)

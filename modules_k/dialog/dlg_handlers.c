@@ -692,9 +692,9 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 
 	set_current_dialog(msg, dlg);
 	_dlg_ctx.dlg = dlg;
+
 	/* Populate initial varlist: */
-	dlg->vars = getvarlist(msg);
-	deletevarlist();
+	dlg->vars = get_local_varlist_pointer(msg, 1);
 
 	link_dlg(dlg, 2/* extra ref for the callback and current dlg hook */);
 

@@ -186,7 +186,7 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 		var = dlg->vars;
 		dlg->vars = dlg->vars->next;
 		shm_free(var->key.s);
-		shm_free(var->key.s);
+		shm_free(var->value.s);
 		shm_free(var);
 	}
 

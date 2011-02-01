@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2008 Juha Heinanen
  * Copyright (C) 2009 1&1 Internet AG
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -53,6 +54,8 @@
 #include "functions.h"
 #include "conf.h"
 #include "xcap_auth.h"
+
+#include "util_file.h"
 
 
 MODULE_VERSION
@@ -113,6 +116,7 @@ static param_export_t params[] = {
     {"xcap_table", STR_PARAM, &xcap_table.s},
     {"http_query_timeout", INT_PARAM, &http_query_timeout},
     {"forward_active", INT_PARAM, &forward_active},
+    {"file_path", STR_PARAM, &file_path.s},
     {0, 0, 0}
 };
 
@@ -124,6 +128,12 @@ static mi_export_t mi_cmds[] = {
 	{ 0, 0, 0, 0, 0}
 };
 
+static pv_export_t mod_pvars[] = {
+	{ {"file", sizeof("file")-1}, PVT_OTHER, pv_get_file,
+		pv_set_file, pv_parse_filename, 0, 0, 0},
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 /* Module interface */
 struct module_exports exports = {
     "utils",
@@ -132,7 +142,7 @@ struct module_exports exports = {
     params,    /* Exported parameters */
     0,         /* exported statistics */
     mi_cmds,   /* exported MI functions */
-    0,         /* exported pseudo-variables */
+    mod_pvars, /* exported pseudo-variables */
     0,         /* extra processes */
     mod_init,  /* module initialization function */
     0,         /* response function*/
@@ -282,6 +292,7 @@ static int mod_init(void)
 
 	/* presence database */
 	pres_db_url.len = pres_db_url.s ? strlen(pres_db_url.s) : 0;
+
 	LM_DBG("pres_db_url=%s/%d/%p\n", ZSW(pres_db_url.s), pres_db_url.len,
 	       pres_db_url.s);
 	xcap_table.len = xcap_table.s ? strlen(xcap_table.s) : 0;
@@ -289,6 +300,9 @@ static int mod_init(void)
 	if(pres_db_init() < 0) {
 	    return -1;
 	}
+	
+	/* Initialize variable */
+	file_path.len = file_path.s ? strlen(file_path.s) : 0;
 
 	return 0;
 }

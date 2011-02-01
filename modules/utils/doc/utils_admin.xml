@@ -151,6 +151,25 @@ modparam("utils", "xcap_table", "pres_xcap")
 				</programlisting>
 			</example>
 		</section>
+		<section>
+			<title><varname>file_path</varname> (string)</title>
+			<para>
+			Defines a default directory for the $file-pvar.
+			</para>
+			<para>
+			<emphasis>
+				Default value is <quote>/etc/kamailio/</quote>.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>file_path</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("utils", "file_path", "/tmp/")
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section>
@@ -253,6 +272,34 @@ if (is_int("$var(foo)")) {
 		</section>
 	</section>
 	
+	<section>
+		<title>Exported Pseudo-Variables</title>
+		<section>
+			<title><varname>$file(filename)</varname> (str)</title>
+			<para>
+			This is a r/w variable. You may use it to write contents to a file or to read contents from a file.
+			</para>
+			<para>
+			<emphasis>
+			The filename may contain a directory; if the directory is ommitted, the "file_path" is used as directory.
+			</emphasis>
+			</para>
+			<example>
+			<title>Use <varname>$file</varname> PV:</title>
+				<programlisting format="linespecific">
+...
+# Write contents to to file:
+$file(test) = "This is test!";
+# Print the contents of a file:
+xlog("L_ERR", "File 'test2' contains $file(test2).\n");
+# Append the current debian-version
+append_hf("Server-Type: Debian $file(/etc/debian_version)\r\n");
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
 	<section>
 	    <title><acronym>MI</acronym> Commands</title>
 		

@@ -40,6 +40,7 @@
 #include <time.h>
 #include "../../qvalue.h"
 #include "../../str.h"
+#include "../../usr_avp.h"
 
 
 /*!
@@ -80,6 +81,7 @@ typedef struct ucontact {
 	unsigned int methods;   /*!< Supported methods */
 	struct ucontact* next;  /*!< Next contact in the linked list */
 	struct ucontact* prev;  /*!< Previous contact in the linked list */
+	avp_t *avps;
 } ucontact_t;
 
 

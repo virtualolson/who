@@ -47,6 +47,8 @@
 #include "lookup.h"
 #include "config.h"
 
+#include "../../mod_fix.h"
+
 #define allowed_method(_msg, _c) \
 	( !method_filtering || ((_msg)->REQ_METHOD)&((_c)->methods) )
 
@@ -181,7 +183,7 @@ done:
  * it is similar to lookup but registered neither rewrites
  * the Request-URI nor appends branches
  */
-int registered(struct sip_msg* _m, char* _t, char* _s)
+int r_registered(struct sip_msg* _m, char* _t, str * _uri)
 {
 	str uri, aor;
 	urecord_t* r;
@@ -189,7 +191,8 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 	int res;
 	int_str match_callid=(int_str)0;
 
-	if (_m->new_uri.s) uri = _m->new_uri;
+	if (_uri) uri = *_uri;
+	else if (_m->new_uri.s) uri = _m->new_uri;
 	else uri = _m->first_line.u.request.uri;
 	
 	if (extract_aor(&uri, &aor) < 0) {
@@ -235,3 +238,33 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 	LM_DBG("'%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
 	return -1;
 }
+
+/*! \brief the is_registered() function
+ * Return true if the AOR in the Request-URI is registered,
+ * it is similar to lookup but registered neither rewrites
+ * the Request-URI nor appends branches
+ */
+int registered(struct sip_msg* _m, char* _t, char* _s)
+{
+	return r_registered(_m, _t, 0);
+}
+
+/*! \brief the is_registered() function
+ * Return true if the AOR in the second Parameter ist registered.
+ */
+int registered2(struct sip_msg* _m, char* _t, char* _uri)
+{
+	str uri;
+	if(fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0)
+	{
+		LM_ERR("unable to get URI\n");
+		return -1;
+	}
+	if(uri.s==NULL || uri.len == 0)
+	{
+		LM_ERR("invalid URI parameter\n");
+		return -1;
+	}
+	return r_registered(_m, _t, &uri);
+}
+

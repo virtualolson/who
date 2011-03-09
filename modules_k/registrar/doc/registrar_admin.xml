@@ -812,7 +812,7 @@ switch ($retcode) {
 		<para>
 		The function returns true if the AOR in the Request-URI is 
 		registered, false otherwise.  The function does not modify the 
-		message being process, it neither rewrites the Request-URI if a 
+		message being processed, it neither rewrites the Request-URI if a 
 		contact is found not append branches.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -833,6 +833,45 @@ switch ($retcode) {
 ...
 if (registered("location")) {
 	sl_send_reply("100", "Trying");
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">registered(domain, uri)</function>
+		</title>
+		<para>
+		The function returns true if the provided URI is 
+		registered, false otherwise. 
+		The function does not modify the 
+		message being processed, it neither rewrites the Request-URI if a 
+		contact is found not append branches.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Name of table that should be 
+			used for the lookup.
+			</para>
+			<para>
+			<emphasis>uri</emphasis> - URI used for lookup
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>registered</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!registered("location", "$fu")) {
+	sl_send_reply("407", "You must register first");
 	...
 };
 ...

@@ -49,5 +49,10 @@ int lookup(struct sip_msg* _m, udomain_t* _d);
  */
 int registered(struct sip_msg* _m, char* _t, char* _s);
 
+/*! \brief the is_registered() function
+ * Return true if the AOR in the second Parameter ist registered.
+ */
+int registered2(struct sip_msg* _m, char* _t, char* _uri);
+
 
 #endif /* LOOKUP_H */

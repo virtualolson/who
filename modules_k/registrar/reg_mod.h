@@ -98,4 +98,15 @@ extern stat_var *rejected_registrations;
 extern stat_var *default_expire_stat;
 extern stat_var *max_expires_stat;
 
+int_str billing_cust_limit_2_avp_name;
+unsigned short billing_cust_limit_2_avp_type;
+
+/*! \brief Structure to handle the AVPs to be stored to a contact */
+struct reg_avp {
+	int_str avp_name;
+	unsigned short type;
+	struct reg_avp* next;
+};
+struct reg_avp * reg_avp_list;
+
 #endif /* REG_MOD_H */

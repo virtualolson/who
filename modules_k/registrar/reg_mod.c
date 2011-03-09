@@ -93,10 +93,12 @@ static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
 static int save_fixup(void** param, int param_no);
-static int unreg_fixup(void** param, int param_no);
+static int reg_fixup(void** param, int param_no);
 static int fetchc_fixup(void** param, int param_no);
 /*! \brief Functions */
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
+
+static int reg_avp_param(modparam_t type, void* val);
 
 int tcp_persistent_flag = -1;			/*!< if the TCP connection should be kept open */
 int method_filtering = 0;			/*!< if the looked up contacts should be filtered based on supported methods */
@@ -162,9 +164,11 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"registered",   (cmd_function)registered,   1,  domain_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"registered",   (cmd_function)registered2,  2,  reg_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"add_sock_hdr", (cmd_function)add_sock_hdr, 1,fixup_str_null, 0,
 			REQUEST_ROUTE },
-	{"unregister",   (cmd_function)unregister,   2,   unreg_fixup, 0,
+	{"unregister",   (cmd_function)unregister,   2,   reg_fixup, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
 	{"reg_fetch_contacts", (cmd_function)pv_fetch_contacts, 3, 
 			fetchc_fixup, 0,
@@ -203,6 +207,7 @@ static param_export_t params[] = {
 	{"use_path",           INT_PARAM, &path_enabled        					},
 	{"path_mode",          INT_PARAM, &path_mode           					},
 	{"path_use_received",  INT_PARAM, &path_use_params     					},
+	{"reg_avp",            STR_PARAM|USE_FUNC_PARAM, (void*)reg_avp_param},
 	{0, 0, 0}
 };
 
@@ -427,7 +432,7 @@ static int domain_fixup(void** param, int param_no)
  * Convert char* parameter to udomain_t* pointer
  * Convert char* parameter to pv_elem_t* pointer
  */
-static int unreg_fixup(void** param, int param_no)
+static int reg_fixup(void** param, int param_no)
 {
 	if (param_no == 1) {
 		return domain_fixup(param, 1);

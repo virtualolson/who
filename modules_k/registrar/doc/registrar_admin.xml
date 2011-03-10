@@ -660,9 +660,12 @@ modparam("registrar", "reg_avp", "$avp(i:2)")
 		The function processes a REGISTER message. It can add, remove or 
 		modify usrloc records depending on Contact and Expires HFs in the 
 		REGISTER message. On success and when called from the REQUEST_ROUTE, 
-		200 OK will be returned listing all	contacts that are currently in 
+		200 OK will be returned listing all contacts that are currently in 
 		usrloc. On an error, error message will be send with a short
 		description in reason phrase.
+		</para>
+		<para>
+		This function will save the AVP's for this contact.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -714,6 +717,9 @@ save("location");
 		<para>
 		Same as <function>save()</function> but it accepts a set of flags for
 		controlling its behaviour.
+		</para>
+		<para>
+		This function will save the AVP's for this contact.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -774,6 +780,9 @@ save("location","0x01");
 		Request-URI will be overwritten with the contact that has
 		the highest q value and optionally the rest will be appended to 
 		the message (depending on append_branches parameter value).
+		</para>
+		<para>
+		This function will restore the AVP's for this contact.
 		</para>
 		<para>
 		If the method_filtering option is enabled, the lookup function
@@ -837,7 +846,10 @@ switch ($retcode) {
 		The function returns true if the AOR in the Request-URI is 
 		registered, false otherwise.  The function does not modify the 
 		message being processed, it neither rewrites the Request-URI if a 
-		contact is found not append branches.
+		contact is found nor appends branches.
+		</para>
+		<para>
+		This function will restore the AVP's for this contact.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -873,7 +885,10 @@ if (registered("location")) {
 		registered, false otherwise. 
 		The function does not modify the 
 		message being processed, it neither rewrites the Request-URI if a 
-		contact is found not append branches.
+		contact is found nor appends branches.
+		</para>
+		<para>
+		This function will restore the AVP's for this contact.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>

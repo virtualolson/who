@@ -47,6 +47,7 @@
 #include "urecord.h"
 #include "ucontact.h"
 #include "reg_avps_db.h"
+#include "../../parser/parse_uri.h"
 
 /*!
  * \brief Create a new contact structure
@@ -68,11 +69,17 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	memset(c, 0, sizeof(ucontact_t));
 
 	if (shm_str_dup( &c->c, _contact) < 0) goto error;
+	if (parse_uri(c->c.s, c->c.len, &c->parsed_c) < 0)
+		LM_ERR("Error while parsing Contact URI\n");
+
 	if (shm_str_dup( &c->callid, _ci->callid) < 0) goto error;
 	if (shm_str_dup( &c->user_agent, _ci->user_agent) < 0) goto error;
 
 	if (_ci->received.s && _ci->received.len) {
 		if (shm_str_dup( &c->received, &_ci->received) < 0) goto error;
+		if (parse_uri(c->received.s, c->received.len, &c->parsed_received) < 0)
+			LM_ERR("Error while parsing Contact URI\n");
+
 	}
 	if (_ci->path && _ci->path->len) {
 		if (shm_str_dup( &c->path, _ci->path) < 0) goto error;
@@ -89,6 +96,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	c->cflags = _ci->cflags;
 	c->methods = _ci->methods;
 	c->last_modified = _ci->last_modified;
+	c->avps = _ci->avps;
 
 	return c;
 error:

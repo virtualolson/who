@@ -41,6 +41,7 @@
 #include "../../qvalue.h"
 #include "../../str.h"
 #include "../../usr_avp.h"
+#include "../../parser/msg_parser.h"
 
 
 /*!
@@ -66,7 +67,11 @@ typedef struct ucontact {
 	str* domain;            /*!< Pointer to domain name (NULL terminated) */
 	str* aor;               /*!< Pointer to the AOR string in record structure*/
 	str c;                  /*!< Contact address */
+	struct sip_uri parsed_c;
+				/*!< Parsed Contact-address */
 	str received;           /*!< IP+port+protocol we received the REGISTER from */
+	struct sip_uri parsed_received;
+				/*!< received socket */
 	str path;               /*!< Path header */
 	time_t expires;         /*!< Expires parameter */
 	qvalue_t q;             /*!< q parameter */
@@ -99,6 +104,7 @@ typedef struct ucontact_info {
 	struct socket_info *sock; /*!< socket informations */
 	unsigned int methods;     /*!< supported methods */
 	time_t last_modified;     /*!< last modified */
+	avp_t *avps;
 } ucontact_info_t;
 
 /*! \brief ancient time used for marking the contacts forced to expired */

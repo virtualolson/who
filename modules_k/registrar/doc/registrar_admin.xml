@@ -623,6 +623,30 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		</programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>reg_avp</varname> (string)</title>
+		<para>
+		The parameter "reg_avp" contains the AVP's which should be stored
+		and restored together with a contact.
+		The parameter can be defined multiple times, for each AVP once.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reg_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "reg_avp", "$avp(s:parameter1)")
+modparam("registrar", "reg_avp", "$avp(i:2)")
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	

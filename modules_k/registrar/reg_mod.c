@@ -90,6 +90,8 @@ static void mod_destroy(void);
 static int w_save(struct sip_msg* _m, char* _d, char* _cflags);
 static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
 
+static int reg_avp_param(modparam_t type, void* val);
+
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
 static int save_fixup(void** param, int param_no);
@@ -99,6 +101,8 @@ static int fetchc_fixup(void** param, int param_no);
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
 static int reg_avp_param(modparam_t type, void* val);
+
+struct reg_avp * reg_avp_list = 0;
 
 int tcp_persistent_flag = -1;			/*!< if the TCP connection should be kept open */
 int method_filtering = 0;			/*!< if the looked up contacts should be filtered based on supported methods */
@@ -492,7 +496,14 @@ static int fetchc_fixup(void** param, int param_no)
 
 static void mod_destroy(void)
 {
+	struct reg_avp * n;	
+
 	free_contact_buf();
+	while (reg_avp_list) {
+		n = reg_avp_list->next;
+		shm_free(reg_avp_list);
+		reg_avp_list = n;
+	}
 }
 
 
@@ -567,4 +578,40 @@ void max_expires_stats_update(str* gname, str* name){
 
 void default_expires_range_update(str* gname, str* name){
 	update_stat(default_expire_range_stat, cfg_get(registrar, registrar_cfg, default_expires_range));
+}
+
+static int reg_avp_param(modparam_t type, void* val) {
+	str s;
+	struct reg_avp * n;
+	pv_spec_t avp_spec;
+
+	if(val==NULL)
+	{
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+	s.s = (char*)val;
+	s.len = strlen(s.s);
+	
+	n = shm_malloc(sizeof(struct reg_avp));
+	if (n == NULL) {
+		LM_ERR("Unable to allocate shared memory!\n");
+		return -1;
+	}
+
+	if (pv_parse_spec(&s, &avp_spec)==0
+		|| avp_spec.type!=PVT_AVP) {
+		LM_ERR("malformed or non AVP definition: %.*s\n", s.len, s.s);
+		goto error;
+	}
+	if(pv_get_avp_name(0, &avp_spec.pvp, &n->name, &n->type)!=0) {
+		LM_ERR("invalid AVP definition: %.*s\n", s.len, s.s);
+		goto error;
+	}
+	n->next = reg_avp_list;
+	reg_avp_list = n;
+	return 0;
+error:
+	shm_free(n);
+	return -1;
 }

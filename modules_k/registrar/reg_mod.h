@@ -103,7 +103,7 @@ unsigned short billing_cust_limit_2_avp_type;
 
 /*! \brief Structure to handle the AVPs to be stored to a contact */
 struct reg_avp {
-	int_str avp_name;
+	int_str name;
 	unsigned short type;
 	struct reg_avp* next;
 };

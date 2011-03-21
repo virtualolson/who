@@ -45,7 +45,7 @@ int reginfo_add_events(void)
 	event.evs_publ_handl = 0;
 
 	if (pres_add_event(&event) < 0) {
-		LM_ERR("failed to add event \"dialog\"\n");
+		LM_ERR("failed to add event \"reginfo\"\n");
 		return -1;
 	}		
 	return 0;

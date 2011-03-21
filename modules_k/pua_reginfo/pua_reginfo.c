@@ -33,6 +33,9 @@
 
 MODULE_VERSION
 
+/* Default domain to be added, if none provided. */
+str default_domain= {NULL, 0};
+
 /** module functions */
 static int mod_init(void);
 
@@ -43,11 +46,16 @@ static cmd_export_t cmds[] = {
 	{0, 0, 0, 0, 0, 0} 
 };
 
+static param_export_t params[]={
+ 	{"default_domain", STR_PARAM, &default_domain.s},
+	{0, 0, 0}
+};
+
 struct module_exports exports= {
 	"pua_reginfo",		/* module name */
 	DEFAULT_DLFLAGS,	/* dlopen flags */
 	cmds,			/* exported functions */
-	0,			/* exported parameters */
+	params,			/* exported parameters */
 	0,			/* exported statistics */
 	0,			/* exported MI functions */
 	0,			/* exported pseudo-variables */
@@ -66,6 +74,13 @@ static int mod_init(void)
 	bind_pua_t bind_pua;
 	bind_usrloc_t bind_usrloc;
 
+	/* Verify the default domain: */
+        if(default_domain.s == NULL ) {       
+                LM_ERR("default domain parameter not set\n");
+                return -1;
+        }
+        default_domain.len= strlen(default_domain.s);
+        
 	/* Bind to PUA: */
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 	if (!bind_pua) {

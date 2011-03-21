@@ -27,7 +27,9 @@
 #include "../pua/pua_bind.h"
 #include "../usrloc/usrloc.h"
 
-extern usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
-extern pua_api_t pua; /*!< Structure containing pointers to PUA functions*/
+str default_domain;
+
+usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
+pua_api_t pua; /*!< Structure containing pointers to PUA functions*/
 
 #endif

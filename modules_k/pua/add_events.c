@@ -86,9 +86,16 @@ int pua_add_events(void)
 	}
 	
 	/* add application/reginfo+xml */
-	if(add_pua_event(REGINFO_EVENT, "reg", "application/reginfo+xml", reginfo_process_body)< 0) {
-		LM_ERR("while adding event application/reginfo+xml\n");
-		return -1;
+	if (dlginfo_increase_version) {
+		if(add_pua_event(REGINFO_EVENT, "reg", "application/reginfo+xml", reginfo_process_body)< 0) {
+			LM_ERR("while adding event application/reginfo+xml with version increase\n");
+			return -1;
+		}
+	} else {
+		if(add_pua_event(REGINFO_EVENT, "reg", "application/reginfo+xml", dlg_process_body)< 0) {
+			LM_ERR("while adding event application/reginfo+xml\n");
+			return -1;
+		}
 	}
 	
 	return 0;

@@ -43,4 +43,6 @@ extern int pua_ul_publish;
 extern int default_expires;
 extern str outbound_proxy;
 
+int reginfo_increase_version;
+
 #endif

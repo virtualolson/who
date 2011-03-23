@@ -25,6 +25,7 @@
 #include "pua_reginfo.h"
 #include <libxml/parser.h>
 #include "../pua/pua.h"
+#include "../pua/send_publish.h"
 
 /*
 Contact: <sip:carsten@10.157.87.36:44733;transport=udp>;expires=600000;+g.oma.sip-im;language="en,fr";+g.3gpp.smsip;+g.oma.sip-im.large-message;audio;+g.3gpp.icsi-ref="urn%3Aurn-7%3A3gpp-application.ims.iari.gsma-vs";+g.3gpp.cs-voice.
@@ -49,7 +50,7 @@ Call-ID: 9ad9f89f-164d-bb86-1072-52e7e9eb5025.
 </reginfo> */
 
 
-str* build_reginfo_full(urecord_t * record, str uri) {
+str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 	xmlDocPtr  doc = NULL; 
 	xmlNodePtr root_node = NULL;
 	xmlNodePtr registration_node = NULL;
@@ -57,7 +58,7 @@ str* build_reginfo_full(urecord_t * record, str uri) {
 	xmlNodePtr uri_node = NULL;
 	str * body= NULL;
 	ucontact_t * ptr;
-	char buf[30];
+	char buf[512];
 	int buf_len;
 
 	/* create the XML-Body */
@@ -105,6 +106,7 @@ str* build_reginfo_full(urecord_t * record, str uri) {
 	ptr = record->contacts;
 	while (ptr) {
 		if (VALID_CONTACT(ptr, time(0))) {
+			LM_DBG("Contact %.*s, %p\n", ptr->c.len, ptr->c.s, ptr);
 			/* Contact-Node */
 			contact_node =xmlNewChild(registration_node, NULL, BAD_CAST "contact", NULL) ;
 			if( contact_node ==NULL) {
@@ -113,10 +115,25 @@ str* build_reginfo_full(urecord_t * record, str uri) {
 			}
 			buf_len = snprintf(buf, sizeof(buf), "%p", ptr);
 			xmlNewProp(contact_node, BAD_CAST "id", BAD_CAST buf);
-			xmlNewProp(contact_node, BAD_CAST "state", BAD_CAST "active");
-			xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "registered");
-			buf_len = snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-time(0)));
-			xmlNewProp(contact_node, BAD_CAST "expires", BAD_CAST buf);
+			/* Check, if this is the modified contact: */
+			if (ptr == c) {
+				if ((type & UL_CONTACT_INSERT) || (type & UL_CONTACT_UPDATE))
+					xmlNewProp(contact_node, BAD_CAST "state", BAD_CAST "active");
+				else 
+					xmlNewProp(contact_node, BAD_CAST "state", BAD_CAST "terminated");
+				if (type & UL_CONTACT_INSERT) xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "created");
+				else if (type & UL_CONTACT_UPDATE) xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "refreshed");
+				else if (type & UL_CONTACT_EXPIRE) xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "expired");
+				else if (type & UL_CONTACT_DELETE) xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "unregistered");
+				else xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "unknown");
+				buf_len = snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-time(0)));
+				xmlNewProp(contact_node, BAD_CAST "expires", BAD_CAST buf);
+			} else {
+				xmlNewProp(contact_node, BAD_CAST "state", BAD_CAST "active");
+				xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "registered");
+				buf_len = snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-time(0)));
+				xmlNewProp(contact_node, BAD_CAST "expires", BAD_CAST buf);
+			}
 			if (ptr->q != Q_UNSPECIFIED) {
 				float q = (float)ptr->q/1000;
 				buf_len = snprintf(buf, sizeof(buf), "%.3f", q);
@@ -161,15 +178,15 @@ error:
 
 void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 	str* body= NULL;
-	publ_info_t* publ= NULL;
-	int size= 0;
+	publ_info_t publ;
 	str content_type;
 	udomain_t * domain;
 	urecord_t * record;
 	int res;
 	str uri = {NULL, 0};
 	char* at = NULL;
-	struct sip_uri remote_uri;
+	char id_buf[512];
+	int id_buf_len;
 
 	content_type.s = "application/reginfo+xml";
 	content_type.len = 23;
@@ -180,7 +197,10 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 	else if(type & UL_CONTACT_UPDATE) LM_DBG("type= UL_CONTACT_UPDATE\n");
 	else if(type & UL_CONTACT_EXPIRE) LM_DBG("type= UL_CONTACT_EXPIRE\n");
 	else if(type & UL_CONTACT_DELETE) LM_DBG("type= UL_CONTACT_DELETE\n");
-	else LM_DBG("Unknown Type %i\n", type);
+	else {
+		LM_ERR("Unknown Type %i\n", type);
+		return;
+	}
 
 	/* Get the UDomain for this account */
 	ul.get_udomain(c->domain->s, &domain);
@@ -211,19 +231,9 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 		}
 		uri.len = snprintf(uri.s, uri.len, "sip:%.*s", record->aor.len, record->aor.s);
 	}
-
-	/* send PUBLISH only if the receiver (entity, RURI) is local*/
-	if (parse_uri(uri.s, uri.len, &remote_uri) < 0) {
-		LM_ERR("failed to parse the URI %.*s\n", uri.len, uri.s);
-		return;
-	}
-	if (!check_self(&(remote_uri.host), 0, 0)) {
-		LM_DBG("do not send PUBLISH to external URI %.*s\n", uri.len, uri.s);
-		return;
-	}
 	
 	/* Build the XML-Body: */
-	body = build_reginfo_full(record, uri);
+	body = build_reginfo_full(record, uri, c, type);
 
 	if(body == NULL || body->s == NULL) {
 		LM_ERR("Error on creating XML-Body for publish\n");
@@ -231,65 +241,31 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 	}
 	LM_DBG("XML-Body:\n%.*s\n", body->len, body->s);
 
-	size = sizeof(publ_info_t)
-	 + sizeof(str) 		/* pres_uri */
-	 + sizeof(str) 		/* Body-Str */
-	 + (body->len		/* The body of the message */
-	 + 18 + c->aor->len 	/* AOR */
-	 + c->domain->len	/* Domain */
-	 + uri.len 		/* pres_uri->s */
-         + content_type.len	/* content_type.s */
-	) * sizeof(char); 
+	LM_DBG("Contact %.*s, %p\n", c->c.len, c->c.s, c);
 
-	publ= (publ_info_t*)pkg_malloc(size);
-	if(publ== NULL) {
-		LM_ERR("no more memory\n");
-		goto error;
-	}
-	memset(publ, 0, size);
-	size = sizeof(publ_info_t);
+	memset(&publ, 0, sizeof(publ_info_t));
 
-	publ->pres_uri = (str*)((char*)publ + size);
-	size += sizeof(str);
-	publ->pres_uri->s = (char*)publ+ size;
-	memcpy(publ->pres_uri->s, uri.s, uri.len);
-	publ->pres_uri->len= uri.len;
-	size += uri.len;
-
-	publ->body = (str*)((char*)publ + size);
-	size += sizeof(str);
-
-	publ->body->s= (char*)publ + size;
-	memcpy(publ->body->s, body->s, body->len);
-	publ->body->len= body->len;
-	size+= body->len;
-
-	publ->id.s= (char*)publ + size;
-	memcpy(publ->id.s, "REGINFO_PUBLISH.", 16);
-	memcpy(publ->id.s+16, c->aor->s, c->aor->len);
-	memcpy(publ->id.s+16+c->aor->len, "@", 1);
-	memcpy(publ->id.s+16+c->aor->len+1, c->domain->s, c->domain->len);
-	publ->id.len = 16 + c->aor->len + 1 + c->domain->len;
-	size += publ->id.len;
-
-	publ->content_type.s = (char*)publ + size;
-	memcpy(publ->content_type.s, content_type.s, content_type.len);
-	publ->content_type.len = content_type.len;
-	size += content_type.len;
-	publ->expires = 3600;
+	publ.pres_uri = &uri;
+	publ.body = body;
+	id_buf_len = snprintf(id_buf, sizeof(id_buf), "REGINFO_PUBLISH.%.*s@%.*s",
+		c->aor->len, c->aor->s,
+		c->domain->len, c->domain->s);
+	publ.id.s = id_buf;
+	publ.id.len = id_buf_len;
+	publ.content_type = content_type;
+	publ.expires = 3600;
 	
 	/* make UPDATE_TYPE, as if this "publish dialog" is not found 
 	   by pua it will fallback to INSERT_TYPE anyway */
-	publ->flag|= UPDATE_TYPE;
+	publ.flag|= UPDATE_TYPE;
+	publ.source_flag |= REGINFO_PUBLISH;
+	publ.event |= REGINFO_EVENT;
+	publ.extra_headers= NULL;
 
-	publ->source_flag |= REGINFO_PUBLISH;
-	publ->event |= REGINFO_EVENT;
-	publ->extra_headers= NULL;
-	if(pua.send_publish(publ) < 0) {
+	if(pua.send_publish(&publ) < 0) {
 		LM_ERR("Error while sending publish\n");
 	}	
 error:
-	if(publ) pkg_free(publ);
 	if (uri.s) pkg_free(uri.s);
 	if(body) {
 		if(body->s) xmlFree(body->s);

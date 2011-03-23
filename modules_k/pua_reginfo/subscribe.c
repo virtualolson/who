@@ -23,17 +23,45 @@
 
 #include "subscribe.h"
 #include "../../pvar.h"
+#include "../pua/send_subscribe.h"
+#include "../pua/pua.h"
+#include "pua_reginfo.h"
 
 int reginfo_subscribe(struct sip_msg* msg, char* uri, char* s2) {
+	str uri_str = {0, 0};
 	char uri_buf[512];
-	int uri_len = 511;
+	int uri_buf_len = 512;
+	subs_info_t subs;
 	
-	if (pv_printf(msg, (pv_elem_t*)uri, uri_buf, &uri_len) < 0) {
+	if (pv_printf(msg, (pv_elem_t*)uri, uri_buf, &uri_buf_len) < 0) {
 		LM_ERR("cannot print uri into the format\n");
 		return -1;
 	}
+	uri_str.s = uri_buf;
+	uri_str.len = uri_buf_len;
 
-	LM_ERR("Subscribing to %.*s\n", uri_len, uri_buf);
+	LM_ERR("Subscribing to %.*s\n", uri_str.len, uri_str.s);
+
+	memset(&subs, 0, sizeof(subs_info_t));
+
+	subs.remote_target = &uri_str;
+	subs.pres_uri= &uri_str;
+
+	subs.watcher_uri= &server_address;
+	subs.expires = 3600;
+
+	subs.source_flag= REGINFO_SUBSCRIBE;
+	subs.event= REGINFO_EVENT;
+	subs.contact= &server_address;
+	
+	if(outbound_proxy.s && outbound_proxy.len)
+		subs.outbound_proxy= &outbound_proxy;
+
+	subs.flag|= UPDATE_TYPE;
+
+	if(pua.send_subscribe(&subs)< 0) {
+		LM_ERR("while sending subscribe\n");
+	}	
 
 	return 1;
 }
@@ -43,7 +71,8 @@ int fixup_subscribe(void** param, int param_no) {
 	str s;
 	if (param_no == 1) {
 		if(*param) {
-			s.s = (char*)(*param); s.len = strlen(s.s);
+			s.s = (char*)(*param);
+			s.len = strlen(s.s);
 			if(pv_parse_format(&s, &model)<0) {
 				LM_ERR("wrong format[%s]\n",(char*)(*param));
 				return E_UNSPEC;

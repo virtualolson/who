@@ -34,7 +34,11 @@
 MODULE_VERSION
 
 /* Default domain to be added, if none provided. */
-str default_domain= {NULL, 0};
+str default_domain = {NULL, 0};
+str outbound_proxy = {NULL, 0};
+str server_address = {NULL, 0};
+
+int publish_reginfo = 1;
 
 /** module functions */
 static int mod_init(void);
@@ -48,6 +52,9 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[]={
  	{"default_domain", STR_PARAM, &default_domain.s},
+	{"outbound_proxy", STR_PARAM, &outbound_proxy.s},
+	{"server_address", STR_PARAM, &server_address.s},
+	{"publish_reginfo", INT_PARAM, &publish_reginfo},
 	{0, 0, 0}
 };
 
@@ -74,12 +81,25 @@ static int mod_init(void)
 	bind_pua_t bind_pua;
 	bind_usrloc_t bind_usrloc;
 
-	/* Verify the default domain: */
-        if(default_domain.s == NULL ) {       
-                LM_ERR("default domain parameter not set\n");
-                return -1;
-        }
-        default_domain.len= strlen(default_domain.s);
+	if (publish_reginfo == 1) {
+		/* Verify the default domain: */
+		if(default_domain.s == NULL ) {       
+		        LM_ERR("default domain parameter not set\n");
+		        return -1;
+		}
+		default_domain.len= strlen(default_domain.s);
+	}
+
+	if(server_address.s== NULL) {
+		LM_ERR("server_address parameter not set\n");
+		return -1;
+	}
+	server_address.len= strlen(server_address.s);
+
+	if(outbound_proxy.s == NULL)
+		LM_DBG("No outbound proxy set\n");
+	else
+		outbound_proxy.len= strlen(outbound_proxy.s);
         
 	/* Bind to PUA: */
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
@@ -91,7 +111,7 @@ static int mod_init(void)
 		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
-	/* Copy Publish/Subscribe methods */
+	/* Check for Publish/Subscribe methods */
 	if(pua.send_publish == NULL) {
 		LM_ERR("Could not import send_publish\n");
 		return -1;
@@ -101,38 +121,38 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* Bind to PUA: */
-	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
-	if (!bind_usrloc) {
-		LM_ERR("Can't bind usrloc\n");
-		return -1;
+	/* Bind to URSLOC: */
+	if (publish_reginfo == 1) {
+		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
+		if (!bind_usrloc) {
+			LM_ERR("Can't bind usrloc\n");
+			return -1;
+		}
+		if (bind_usrloc(&ul) < 0) {
+			LM_ERR("Can't bind usrloc\n");
+			return -1;
+		}
+		if(ul.register_ulcb == NULL) {
+			LM_ERR("Could not import ul_register_ulcb\n");
+			return -1;
+		}
+		if(ul.register_ulcb(UL_CONTACT_INSERT, reginfo_usrloc_cb , 0)< 0) {
+			LM_ERR("can not register callback for insert\n");
+			return -1;
+		}
+		if(ul.register_ulcb(UL_CONTACT_EXPIRE, reginfo_usrloc_cb, 0)< 0) {	
+			LM_ERR("can not register callback for expire\n");
+			return -1;
+		}
+		if(ul.register_ulcb(UL_CONTACT_UPDATE, reginfo_usrloc_cb, 0)< 0) {	
+			LM_ERR("can not register callback for update\n");
+			return -1;
+		}
+		if(ul.register_ulcb(UL_CONTACT_DELETE, reginfo_usrloc_cb, 0)< 0) {	
+			LM_ERR("can not register callback for delete\n");
+			return -1;
+		}
 	}
-	if (bind_usrloc(&ul) < 0) {
-		LM_ERR("Can't bind usrloc\n");
-		return -1;
-	}
-	if(ul.register_ulcb == NULL) {
-		LM_ERR("Could not import ul_register_ulcb\n");
-		return -1;
-	}
-
-	if(ul.register_ulcb(UL_CONTACT_INSERT, reginfo_usrloc_cb , 0)< 0) {
-		LM_ERR("can not register callback for insert\n");
-		return -1;
-	}
-	if(ul.register_ulcb(UL_CONTACT_EXPIRE, reginfo_usrloc_cb, 0)< 0) {	
-		LM_ERR("can not register callback for expire\n");
-		return -1;
-	}
-	if(ul.register_ulcb(UL_CONTACT_UPDATE, reginfo_usrloc_cb, 0)< 0) {	
-		LM_ERR("can not register callback for update\n");
-		return -1;
-	}
-	if(ul.register_ulcb(UL_CONTACT_DELETE, reginfo_usrloc_cb, 0)< 0) {	
-		LM_ERR("can not register callback for delete\n");
-		return -1;
-	}
-
 	return 0;
 }
 

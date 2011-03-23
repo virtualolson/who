@@ -55,6 +55,7 @@
 #define DIALOG_PUBLISH      1<<10
 #define PURPLE_PUBLISH      1<<11
 #define REGINFO_PUBLISH     1<<12
+#define REGINFO_SUBSCRIBE   1<<13
 
 #define NO_UPDATEDB_FLAG    1<<0
 #define UPDATEDB_FLAG       1<<1

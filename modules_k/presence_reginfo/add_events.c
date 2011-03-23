@@ -35,7 +35,7 @@ int reginfo_add_events(void)
 	/* constructing message-summary event */
 	memset(&event, 0, sizeof(pres_ev_t));
 	event.name.s = "reg";
-	event.name.len = 6;
+	event.name.len = 3;
 
 	event.content_type.s = "application/reginfo+xml";
 	event.content_type.len = 23;

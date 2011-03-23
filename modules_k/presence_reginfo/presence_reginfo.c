@@ -76,7 +76,7 @@ static int mod_init(void)
 		return -1;
 	}
 	if (bind_presence(&pres) < 0) {
-		LM_ERR("can't bind pua\n");
+		LM_ERR("can't bind presence\n");
 		return -1;
 	}
 
@@ -86,7 +86,7 @@ static int mod_init(void)
 		return -1;
 	}
 	if(reginfo_add_events() < 0) {
-		LM_ERR("failed to add dialog-info events\n");
+		LM_ERR("failed to add reginfo-info events\n");
 		return -1;		
 	}	
     

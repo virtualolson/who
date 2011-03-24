@@ -40,13 +40,12 @@ int reginfo_subscribe(struct sip_msg* msg, char* uri, char* s2) {
 	uri_str.s = uri_buf;
 	uri_str.len = uri_buf_len;
 
-	LM_ERR("Subscribing to %.*s\n", uri_str.len, uri_str.s);
+	LM_DBG("Subscribing to %.*s\n", uri_str.len, uri_str.s);
 
 	memset(&subs, 0, sizeof(subs_info_t));
 
 	subs.remote_target = &uri_str;
 	subs.pres_uri= &uri_str;
-
 	subs.watcher_uri= &server_address;
 	subs.expires = 3600;
 

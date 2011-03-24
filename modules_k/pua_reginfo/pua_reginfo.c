@@ -40,13 +40,17 @@ str server_address = {NULL, 0};
 
 int publish_reginfo = 1;
 
+
+/** Fixup functions */
+static int domain_fixup(void** param, int param_no);
+
 /** module functions */
 static int mod_init(void);
 
 /* Commands */
 static cmd_export_t cmds[] = {
-	{"reginfo_subscribe", (cmd_function)reginfo_subscribe, 1, fixup_subscribe, 0, REQUEST_ROUTE}, 	
-	{"reginfo_handle_notify", (cmd_function)reginfo_handle_notify, 0, 0, 0, REQUEST_ROUTE}, 	
+	{"reginfo_subscribe", (cmd_function)reginfo_subscribe, 1, fixup_subscribe, 0, REQUEST_ROUTE|ONREPLY_ROUTE}, 	
+	{"reginfo_handle_notify", (cmd_function)reginfo_handle_notify, 1, domain_fixup, 0, REQUEST_ROUTE}, 	
 	{0, 0, 0, 0, 0, 0} 
 };
 
@@ -122,16 +126,16 @@ static int mod_init(void)
 	}
 
 	/* Bind to URSLOC: */
+	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
+	if (!bind_usrloc) {
+		LM_ERR("Can't bind usrloc\n");
+		return -1;
+	}
+	if (bind_usrloc(&ul) < 0) {
+		LM_ERR("Can't bind usrloc\n");
+		return -1;
+	}
 	if (publish_reginfo == 1) {
-		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
-		if (!bind_usrloc) {
-			LM_ERR("Can't bind usrloc\n");
-			return -1;
-		}
-		if (bind_usrloc(&ul) < 0) {
-			LM_ERR("Can't bind usrloc\n");
-			return -1;
-		}
 		if(ul.register_ulcb == NULL) {
 			LM_ERR("Could not import ul_register_ulcb\n");
 			return -1;
@@ -152,6 +156,24 @@ static int mod_init(void)
 			LM_ERR("can not register callback for delete\n");
 			return -1;
 		}
+	}
+	return 0;
+}
+
+/*! \brief
+ * Convert char* parameter to udomain_t* pointer
+ */
+static int domain_fixup(void** param, int param_no)
+{
+	udomain_t* d;
+
+	if (param_no == 1) {
+		if (ul.register_udomain((char*)*param, &d) < 0) {
+			LM_ERR("failed to register domain\n");
+			return E_UNSPEC;
+		}
+
+		*param = (void*)d;
 	}
 	return 0;
 }

@@ -113,8 +113,7 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 				LM_ERR("while adding child\n");
 				goto error;
 			}
-			buf_len = snprintf(buf, sizeof(buf), "%p", ptr);
-			xmlNewProp(contact_node, BAD_CAST "id", BAD_CAST buf);
+			xmlNewProp(contact_node, BAD_CAST "id", BAD_CAST ptr->callid.s);
 			/* Check, if this is the modified contact: */
 			if (ptr == c) {
 				if ((type & UL_CONTACT_INSERT) || (type & UL_CONTACT_UPDATE))

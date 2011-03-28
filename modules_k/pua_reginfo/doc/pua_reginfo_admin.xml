@@ -35,6 +35,24 @@
  	      And finally, it can process received "NOTIFY" requests and it will 
               update the local registry accordingly.
 	    </para>
+	    <para>
+ 	      Use cases for this might be:
+		<itemizedlist>
+		<listitem>Keeping different Servers in Sync regarding
+		the location database
+		</listitem>
+		<listitem>Get notified, when a user registers: A presence-server,
+		which handles offline message storage for an account, would get
+		notified, when the user comes online.
+		</listitem>
+		<listitem>A client could subscribe to it's own registration-status,
+		so he would get notified as soon as his account gets administratively
+		unregistered.
+		</listitem>
+		<listitem>...</listitem>
+		</itemizedlist>
+	    </para>
+
 	</section>
 
 	<section>
@@ -145,7 +163,7 @@ modparam("pua_reginfo", "outbound_proxy", "sip:proxy@kamailio.org")
 		<title>Set <varname>server_address</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pua_reginfo", "server_address", "sip:bla@160.34.23.12")
+modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
 ...
 </programlisting>
 		</example>
@@ -161,12 +179,34 @@ modparam("pua_reginfo", "server_address", "sip:bla@160.34.23.12")
 				This function processes received "NOTIFY"-requests and updates
 				the local registry accordingly.
 			</para>
+			<para>
+				This method does not create any SIP-Reponse, this has to be done
+				the script-writer.
+			</para>
+			<para>Return codes:</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>2</emphasis> - contacts successfully updated,
+				but no more contacts online now.
+				</para>
+				<para>
+				<emphasis>1</emphasis> - contacts successfully updated and at
+				at least one contact still registered.
+				</para>
+				<para>
+				<emphasis>-1</emphasis> - Invalid NOTIFY or other error (see log-file)
+				</para>
+			</listitem>
+			</itemizedlist>
+
 			<example>
 				<title><function>reginfo_handle_notify</function> usage</title>
 				<programlisting format="linespecific">
 ...
 if(is_method("NOTIFY")) 
-	reginfo_handle_notify();		
+	if (reginfo_handle_notify())
+		send_reply("202", "Accepted");
 ...
 				</programlisting>
 			</example>

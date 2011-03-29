@@ -576,6 +576,7 @@ int db_update_ucontact(ucontact_t* _c)
 	keys2[8] = &sock_col;
 	keys2[9] = &methods_col;
 	keys2[10] = &last_mod_col;
+	keys2[11] = &reg_avps_col;
 
 	vals1[0].type = DB1_STR;
 	vals1[0].nul = 0;

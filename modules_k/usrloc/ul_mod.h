@@ -43,7 +43,7 @@
  */
 
 
-#define UL_TABLE_VERSION 1004
+#define UL_TABLE_VERSION 1005
 
 extern str user_col;
 extern str domain_col;

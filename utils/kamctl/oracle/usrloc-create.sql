@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('location','1004');
+INSERT INTO version (table_name, table_version) values ('location','1005');
 CREATE TABLE location (
     id NUMBER(10) PRIMARY KEY,
     username VARCHAR2(64) DEFAULT '',
@@ -15,7 +15,8 @@ CREATE TABLE location (
     cflags NUMBER(10) DEFAULT 0 NOT NULL,
     user_agent VARCHAR2(255) DEFAULT '',
     socket VARCHAR2(64) DEFAULT NULL,
-    methods NUMBER(10) DEFAULT NULL
+    methods NUMBER(10) DEFAULT NULL,
+    reg_avps VARCHAR(255) DEFAULT NULL,
 );
 
 CREATE OR REPLACE TRIGGER location_tr

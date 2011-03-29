@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('location','1004');
+INSERT INTO version (table_name, table_version) values ('location','1005');
 CREATE TABLE location (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     username VARCHAR(64) DEFAULT '' NOT NULL,
@@ -15,7 +15,8 @@ CREATE TABLE location (
     cflags INT(11) DEFAULT 0 NOT NULL,
     user_agent VARCHAR(255) DEFAULT '' NOT NULL,
     socket VARCHAR(64) DEFAULT NULL,
-    methods INT(11) DEFAULT NULL
+    methods INT(11) DEFAULT NULL,
+    reg_avps VARCHAR(255) DEFAULT NULL,
 ) ENGINE=MyISAM;
 
 CREATE INDEX account_contact_idx ON location (username, domain, contact);

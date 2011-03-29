@@ -87,6 +87,8 @@ static int restore_reg_avps(ucontact_t* c)
 	avp_name_t name;
 	str *s;	
 	
+	LM_DBG("Restoring AVP's: %p / %p\n", c, c->avps);
+	
 	/* remove all these AVPs ? */
 	avp = c->avps;
 	while (avp) {
@@ -97,6 +99,7 @@ static int restore_reg_avps(ucontact_t* c)
 	/* add stored AVPs */
 	avp = c->avps;
 	while (avp) {
+		LM_DBG("avp %p\n", avp);
 		get_avp_val(avp, &val);
 		if (avp->flags & AVP_NAME_STR) {
 			s = get_avp_name(avp);
@@ -105,8 +108,14 @@ static int restore_reg_avps(ucontact_t* c)
 				name.s.s = NULL;
 				name.s.len = 0;
 			}
-		} else name.n = avp->id;
-		
+			LM_DBG("AVP s:%.*s\n", name.s.len, name.s.s);
+		} else {
+			name.n = avp->id;
+			LM_DBG("AVP i:%d\n", name.n);
+		}
+		if ((val.s.s) && (val.s.len > 0))	
+			LM_DBG("Val s:%.*s\n", val.s.len, val.s.s);
+		LM_DBG("Val i:%d\n", val.n);
 		/* modify flags here? */
 		add_avp(avp->flags, name, val);
 		

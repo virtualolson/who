@@ -110,6 +110,7 @@ static inline avp_t *avp_dup(avp_t *avp)
  */
 static void remove_avp_contact(struct ucontact *c) {
 	avp_t *n;
+	
 	while (c->avps) {
 		n = c->avps->next;
 		shm_free(c->avps);
@@ -131,7 +132,7 @@ static int create_avp_list(avp_t * avp_list) {
 	n = reg_avp_list;
 	while (n) {
 		/* Search for the AVP */
-		avp = search_first_avp(avp->flags, n->name, 0, &ss);
+		avp = search_first_avp(n->type, n->name, 0, &ss);
 		while(avp) {
 			dup = avp_dup(avp);
 			if (dup) {
@@ -165,10 +166,12 @@ static int new_reg_avps(ucontact_info_t* c)
  */
 static int update_reg_avps(struct ucontact *c)
 {
-	/* Remove existing AVP's from this contact: */
-	remove_avp_contact(c);
-
-	return create_avp_list(c->avps);
+	if (c) {
+		/* Remove existing AVP's from this contact: */
+		remove_avp_contact(c);
+		return create_avp_list(c->avps);
+	}
+	return -1;
 }
 
 /*! \brief

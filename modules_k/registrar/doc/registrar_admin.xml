@@ -636,6 +636,11 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 			Default value is NULL (disabled).
 		</emphasis>
 		</para>
+		<para>
+		<emphasis>
+			THIS FUNCTIONALITY IS UNDER CONSTRUCTION.
+		</emphasis>
+		</para>
 		<example>
 		<title>Set <varname>reg_avp</varname> parameter</title>
 		<programlisting format="linespecific">

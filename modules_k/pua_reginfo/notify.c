@@ -24,8 +24,10 @@
 #include "notify.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
+#include "../../parser/parse_uri.h"
 #include "../../modules_k/usrloc/usrloc.h"
 #include <libxml/parser.h>
+#include "pua_reginfo.h"
 
 /*<?xml version="1.0"?>
 <reginfo xmlns="urn:ietf:params:xml:ns:reginfo" version="0" state="full">
@@ -55,6 +57,33 @@
 #define EVENT_CREATED 3
 #define EVENT_REFRESHED 4
 #define EVENT_EXPIRED 5
+
+#define RESULT_ERROR -1
+#define RESULT_CONTACTS_FOUND 1
+#define RESULT_NO_CONTACTS 2
+
+int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str callid, int cseq, int expires, int event, str contact_uri) {
+	if (*ul_record == NULL) {
+		switch(event) {
+			case EVENT_REGISTERED:
+			case EVENT_CREATED:
+			case EVENT_REFRESHED:
+				/* In case, no record exists and new one should be created,
+				   create a new entry for this user in the usrloc-DB */
+				if (ul.insert_urecord(domain, &aor, ul_record) < 0) {
+					LM_ERR("failed to insert new user-record\n");
+					return RESULT_NO_CONTACTS;
+				}
+				break;
+			default:
+				/* No entry in usrloc and the contact is expired, deleted, unregistered, whatever:
+                                   We do not need to do anything. */
+				return RESULT_NO_CONTACTS;
+				break;
+		}
+	}
+	return RESULT_NO_CONTACTS;
+}
 
 xmlNodePtr xmlGetNodeByName(xmlNodePtr parent, const char *name) {
 	xmlNodePtr cur = parent;
@@ -127,18 +156,20 @@ int reginfo_parse_event(char * s) {
 }
 
 int process_body(str notify_body, udomain_t * domain) {
-	xmlNodePtr doc_root = NULL;
 	xmlDocPtr doc= NULL;
-	xmlNodePtr registrations = NULL;
-	xmlNodePtr contacts = NULL;
-	xmlNodePtr uris = NULL;
+	xmlNodePtr doc_root = NULL, registrations = NULL, contacts = NULL, uris = NULL;
 	str aor = {0, 0};
 	str callid = {0, 0};
 	str contact_uri = {0, 0};
-	int state;
-	int event;
-	char * expires_char;
-	int expires;
+	int state, event, expires, result, final_result = RESULT_ERROR;
+	char * expires_char,  * cseq_char;
+	int cseq;
+	urecord_t * ul_record;
+	ucontact_t * ul_contact;
+	struct sip_uri parsed_aor;
+
+	/* Temporary */
+	int mem_only = 1;
 
 	doc = xmlParseMemory(notify_body.s, notify_body.len);
 	if(doc== NULL)  {
@@ -167,70 +198,128 @@ int process_body(str notify_body, udomain_t * domain) {
 			goto next_registration;
 		}
 		aor.len = strlen(aor.s);
-		LM_ERR("AOR %.*s has state \"%d\"\n", aor.len, aor.s, state);
-		/* Now lets process the Contact's from this Registration: */
-		contacts = registrations->children;
-		while (contacts) {
-			if (xmlStrcasecmp(contacts->name, BAD_CAST "contact") != 0)
-				goto next_contact;
-			callid.s = xmlGetAttrContentByName(contacts, "callid");
-			if (callid.s == NULL) {
-				LM_ERR("No Call-ID for this contact!\n");		
-				goto next_contact;
-			}
-			callid.len = strlen(callid.s);
+		LM_DBG("AOR %.*s has state \"%d\"\n", aor.len, aor.s, state);
 
-			event = reginfo_parse_event(xmlGetAttrContentByName(contacts, "event"));
-			if (event == EVENT_UNKNOWN) {
-				LM_ERR("No event for this contact!\n");		
-				goto next_contact;
-			}
-			expires_char = xmlGetAttrContentByName(contacts, "expires");
-			if (expires_char == NULL) {
-				LM_ERR("No expires for this contact!\n");		
-				goto next_contact;
-			}
-			expires = atoi(expires_char);
-			if (expires < 0) {
-				LM_ERR("No valid expires for this contact!\n");		
-				goto next_contact;
-			}
-			LM_ERR("%.*s: Event \"%d\", expires %d\n",
-				callid.len, callid.s, event, expires);
-			/* Now lets process the URI's from this Contact: */
-			uris = contacts->children;
-			while (uris) {
-				if (xmlStrcasecmp(uris->name, BAD_CAST "uri") != 0)
-					goto next_uri;
-				contact_uri.s = (char*)xmlNodeGetContent(uris);	
-				if (contact_uri.s == NULL) {
-					LM_ERR("No URI for this contact!\n");		
-					goto next_registration;
+		/* Get username part of the AOR, search for @ in the AOR. */
+		if (parse_uri(aor.s, aor.len, &parsed_aor) < 0) {
+			LM_ERR("failed to parse Address of Record (%.*s)\n",
+				aor.len, aor.s);
+			goto next_registration;
+		}
+
+		/* Now let's lock that domain for this AOR: */		
+		ul.lock_udomain(domain, &parsed_aor.user);
+		/* and retrieve the user-record for this user: */
+		result = ul.get_urecord(domain, &parsed_aor.user, &ul_record);
+		if (result < 0) {
+			ul.unlock_udomain(domain, &parsed_aor.user);
+			LM_ERR("failed to query usrloc (User %.*s)\n",
+				parsed_aor.user.len, parsed_aor.user.s);
+			goto next_registration;
+		}
+		/* If no contacts found, then set the ul_record to NULL */
+		if (result != 0) ul_record = NULL;
+
+		/* If the state is terminated, we just can delete all bindings */
+		if (state == STATE_TERMINATED) {
+			if (ul_record) {
+				ul_contact = ul_record->contacts;
+				while(ul_contact) {
+					if (mem_only) {
+						ul_contact->flags |= FL_MEM;
+					} else {
+						ul_contact->flags &= ~FL_MEM;
+					}
+					ul_contact = ul_contact->next;
 				}
-				contact_uri.len = strlen(contact_uri.s);
-				LM_ERR("Contact: %.*s\n",
-					contact_uri.len, contact_uri.s);
-next_uri:
-				uris = uris->next;
+				if (ul.delete_urecord(domain, &parsed_aor.user, ul_record) < 0) {
+					LM_ERR("failed to remove record from usrloc\n");
+				}
+				/* If already a registration with contacts was found, then keep that result.
+				   otherwise the result is now "No contacts found" */
+				if (final_result != RESULT_CONTACTS_FOUND) final_result = RESULT_NO_CONTACTS;
 			}
+		/* Otherwise, process the content */
+		} else {
+			/* Now lets process the Contact's from this Registration: */
+			contacts = registrations->children;
+			while (contacts) {
+				if (xmlStrcasecmp(contacts->name, BAD_CAST "contact") != 0)
+					goto next_contact;
+				callid.s = xmlGetAttrContentByName(contacts, "callid");
+				if (callid.s == NULL) {
+					LM_ERR("No Call-ID for this contact!\n");		
+					goto next_contact;
+				}
+				callid.len = strlen(callid.s);
+
+				event = reginfo_parse_event(xmlGetAttrContentByName(contacts, "event"));
+				if (event == EVENT_UNKNOWN) {
+					LM_ERR("No event for this contact!\n");		
+					goto next_contact;
+				}
+				expires_char = xmlGetAttrContentByName(contacts, "expires");
+				if (expires_char == NULL) {
+					LM_ERR("No expires for this contact!\n");		
+					goto next_contact;
+				}
+				expires = atoi(expires_char);
+				if (expires < 0) {
+					LM_ERR("No valid expires for this contact!\n");		
+					goto next_contact;
+				}
+				LM_DBG("%.*s: Event \"%d\", expires %d\n",
+					callid.len, callid.s, event, expires);
+
+				cseq_char = xmlGetAttrContentByName(contacts, "cseq");
+				if (cseq_char == NULL) {
+					LM_WARN("No cseq for this contact!\n");		
+				} else {
+					cseq = atoi(cseq_char);
+					if (cseq < 0) {
+						LM_WARN("No valid cseq for this contact!\n");		
+					}
+				}
+
+				/* Now lets process the URI's from this Contact: */
+				uris = contacts->children;
+				while (uris) {
+					if (xmlStrcasecmp(uris->name, BAD_CAST "uri") != 0)
+						goto next_uri;
+					contact_uri.s = (char*)xmlNodeGetContent(uris);	
+					if (contact_uri.s == NULL) {
+						LM_ERR("No URI for this contact!\n");		
+						goto next_registration;
+					}
+					contact_uri.len = strlen(contact_uri.s);
+					LM_DBG("Contact: %.*s\n",
+						contact_uri.len, contact_uri.s);
+				
+					/* Process the result */
+					if (final_result != RESULT_CONTACTS_FOUND) final_result = result;
+next_uri:
+					uris = uris->next;
+				}
 next_contact:
-			contacts = contacts->next;
+				contacts = contacts->next;
+			}
 		}
 next_registration:
+		if (ul_record) ul.release_urecord(ul_record);		
+		/* Unlock the domain for this AOR: */
+		ul.unlock_udomain(domain, &parsed_aor.user);
+
 		registrations = registrations->next;
 	}
-	/* Free the XML-Document */
-    	if(doc) xmlFreeDoc(doc);
-
-	return 1;
 error:
 	/* Free the XML-Document */
     	if(doc) xmlFreeDoc(doc);
-	return -1;
+	return final_result;
 }
 
 int reginfo_handle_notify(struct sip_msg* msg, char* domain, char* s2) {
  	str body;
+	int result = 0;
 
   	/* If not done yet, parse the whole message now: */
   	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
@@ -252,6 +341,8 @@ int reginfo_handle_notify(struct sip_msg* msg, char* domain, char* s2) {
 
 	LM_DBG("Body is %.*s\n", body.len, body.s);
 	
-	return process_body(body, (udomain_t*)domain);
+	result = process_body(body, (udomain_t*)domain);
+
+	return result;
 }
 

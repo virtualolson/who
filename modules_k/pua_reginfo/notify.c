@@ -63,6 +63,11 @@
 #define RESULT_NO_CONTACTS 2
 
 int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str callid, int cseq, int expires, int event, str contact_uri) {
+	str no_str = {0, 0};
+	static str no_ua = str_init("n/a");
+	static ucontact_info_t ci;
+	ucontact_t * ul_contact;
+
 	if (*ul_record == NULL) {
 		switch(event) {
 			case EVENT_REGISTERED:
@@ -72,7 +77,7 @@ int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str cal
 				   create a new entry for this user in the usrloc-DB */
 				if (ul.insert_urecord(domain, &aor, ul_record) < 0) {
 					LM_ERR("failed to insert new user-record\n");
-					return RESULT_NO_CONTACTS;
+					return RESULT_ERROR;
 				}
 				break;
 			default:
@@ -82,6 +87,40 @@ int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str cal
 				break;
 		}
 	}
+	
+	/* Make sure, no crap is in the structure: */
+	memset( &ci, 0, sizeof(ucontact_info_t));	
+	/* Get callid of the message */
+	ci.callid = &callid;
+	/* Get CSeq number of the message */
+	ci.cseq = cseq;
+	ci.sock = NULL;
+	/* additional info from message */
+	ci.user_agent = &no_ua;
+	ci.last_modified = time(0);
+
+	/* set expire time */
+	ci.expires = time(0) + expires;
+
+	/* Now we start looking for the contact: */
+	if (((*ul_record)->contacts == 0)
+		|| (ul.get_ucontact(*ul_record, &aor, &callid, &no_str, cseq, &ul_contact) != 0)) {
+		if (ul.insert_ucontact(*ul_record, &aor, &ci, &ul_contact) < 0) {
+			LM_ERR("failed to insert new contact\n");
+			return RESULT_ERROR;
+		}
+	} else {
+		if (ul.update_ucontact(*ul_record, ul_contact, &ci) < 0) {
+			LM_ERR("failed to update contact\n");
+			return RESULT_ERROR;
+		}
+	}
+	ul_contact = (*ul_record)->contacts;
+	while (ul_contact) {
+		if (VALID_CONTACT(ul_contact, time(0))) return RESULT_CONTACTS_FOUND;
+		ul_contact = ul_contact->next;
+	}
+
 	return RESULT_NO_CONTACTS;
 }
 

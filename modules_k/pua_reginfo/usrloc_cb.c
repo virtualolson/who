@@ -114,7 +114,7 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 				goto error;
 			}
 			memset(buf, 0, sizeof(buf));
-			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->callid.len, ptr->callid.s);
+			buf_len = snprintf(buf, sizeof(buf), "%p", ptr);
 			xmlNewProp(contact_node, BAD_CAST "id", BAD_CAST ptr->callid.s);
 			/* Check, if this is the modified contact: */
 			if (ptr == c) {
@@ -140,7 +140,12 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 				buf_len = snprintf(buf, sizeof(buf), "%.3f", q);
 				xmlNewProp(contact_node, BAD_CAST "q", BAD_CAST buf);
 			}
-
+			/* CallID Attribute */
+			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->callid.len, ptr->callid.s);
+			xmlNewProp(contact_node, BAD_CAST "callid", BAD_CAST ptr->callid.s);
+			/* CSeq Attribute */
+			buf_len = snprintf(buf, sizeof(buf), "%d", ptr->cseq);
+			uri_node = xmlNewChild(contact_node, NULL, BAD_CAST "cseq", BAD_CAST buf) ;
 			/* URI-Node */
 			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->c.len, ptr->c.s);
 			uri_node = xmlNewChild(contact_node, NULL, BAD_CAST "uri", BAD_CAST buf) ;

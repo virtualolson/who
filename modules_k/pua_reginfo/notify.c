@@ -173,7 +173,7 @@ int process_body(str notify_body, udomain_t * domain) {
 		while (contacts) {
 			if (xmlStrcasecmp(contacts->name, BAD_CAST "contact") != 0)
 				goto next_contact;
-			callid.s = xmlGetAttrContentByName(contacts, "id");
+			callid.s = xmlGetAttrContentByName(contacts, "callid");
 			if (callid.s == NULL) {
 				LM_ERR("No Call-ID for this contact!\n");		
 				goto next_contact;

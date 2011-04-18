@@ -104,7 +104,7 @@ int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str cal
 
 	/* Now we start looking for the contact: */
 	if (((*ul_record)->contacts == 0)
-		|| (ul.get_ucontact(*ul_record, &aor, &callid, &no_str, cseq, &ul_contact) != 0)) {
+		|| (ul.get_ucontact(*ul_record, &aor, &callid, &no_str, cseq+1, &ul_contact) != 0)) {
 		if (ul.insert_ucontact(*ul_record, &aor, &ci, &ul_contact) < 0) {
 			LM_ERR("failed to insert new contact\n");
 			return RESULT_ERROR;

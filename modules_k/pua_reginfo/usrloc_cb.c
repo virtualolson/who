@@ -127,26 +127,32 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 				else if (type & UL_CONTACT_EXPIRE) xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "expired");
 				else if (type & UL_CONTACT_DELETE) xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "unregistered");
 				else xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "unknown");
+				memset(buf, 0, sizeof(buf));
 				buf_len = snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-time(0)));
 				xmlNewProp(contact_node, BAD_CAST "expires", BAD_CAST buf);
 			} else {
 				xmlNewProp(contact_node, BAD_CAST "state", BAD_CAST "active");
 				xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "registered");
+				memset(buf, 0, sizeof(buf));
 				buf_len = snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-time(0)));
 				xmlNewProp(contact_node, BAD_CAST "expires", BAD_CAST buf);
 			}
 			if (ptr->q != Q_UNSPECIFIED) {
 				float q = (float)ptr->q/1000;
+				memset(buf, 0, sizeof(buf));
 				buf_len = snprintf(buf, sizeof(buf), "%.3f", q);
 				xmlNewProp(contact_node, BAD_CAST "q", BAD_CAST buf);
 			}
 			/* CallID Attribute */
+			memset(buf, 0, sizeof(buf));
 			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->callid.len, ptr->callid.s);
 			xmlNewProp(contact_node, BAD_CAST "callid", BAD_CAST ptr->callid.s);
 			/* CSeq Attribute */
+			memset(buf, 0, sizeof(buf));
 			buf_len = snprintf(buf, sizeof(buf), "%d", ptr->cseq);
 			xmlNewProp(contact_node, BAD_CAST "cseq", BAD_CAST buf);
 			/* URI-Node */
+			memset(buf, 0, sizeof(buf));
 			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->c.len, ptr->c.s);
 			uri_node = xmlNewChild(contact_node, NULL, BAD_CAST "uri", BAD_CAST buf) ;
 			if(uri_node == NULL) {

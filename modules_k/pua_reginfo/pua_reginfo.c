@@ -50,6 +50,7 @@ static int mod_init(void);
 /* Commands */
 static cmd_export_t cmds[] = {
 	{"reginfo_subscribe", (cmd_function)reginfo_subscribe, 1, fixup_subscribe, 0, REQUEST_ROUTE|ONREPLY_ROUTE}, 	
+	{"reginfo_subscribe", (cmd_function)reginfo_subscribe2, 2, fixup_subscribe, 0, REQUEST_ROUTE|ONREPLY_ROUTE}, 	
 	{"reginfo_handle_notify", (cmd_function)reginfo_handle_notify, 1, domain_fixup, 0, REQUEST_ROUTE}, 	
 	{0, 0, 0, 0, 0, 0} 
 };

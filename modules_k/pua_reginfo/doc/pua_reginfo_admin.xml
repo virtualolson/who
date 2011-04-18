@@ -213,7 +213,7 @@ if(is_method("NOTIFY"))
 		</section>
 		<section>
 			<title>
-				<function moreinfo="none">reginfo_subscribe(uri)</function>
+				<function moreinfo="none">reginfo_subscribe(uri[, expires])</function>
 			</title>
 			<para>
 				This function will subscribe for reginfo-information at the given
@@ -225,6 +225,9 @@ if(is_method("NOTIFY"))
 				<para>
 				<emphasis>uri</emphasis> - SIP-URI of the server, where to subscribe,
 				may contain pseudo-variables.
+				</para>
+				<para>
+				<emphasis>expires</emphasis> - Expiration date for this subscription, in seconds (default 3600)
 				</para>
 			</listitem>
 			</itemizedlist>

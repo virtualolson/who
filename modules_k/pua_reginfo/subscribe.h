@@ -27,6 +27,7 @@
 #include "../../parser/msg_parser.h"
 
 int reginfo_subscribe(struct sip_msg*, char*, char*);
+int reginfo_subscribe2(struct sip_msg*, char*, char*);
 int fixup_subscribe(void** param, int param_no);
 
 #endif

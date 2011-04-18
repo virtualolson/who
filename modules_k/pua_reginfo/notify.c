@@ -202,7 +202,7 @@ int process_body(str notify_body, udomain_t * domain) {
 	str contact_uri = {0, 0};
 	int state, event, expires, result, final_result = RESULT_ERROR;
 	char * expires_char,  * cseq_char;
-	int cseq;
+	int cseq = 0;
 	urecord_t * ul_record;
 	ucontact_t * ul_contact;
 	struct sip_uri parsed_aor;
@@ -333,6 +333,9 @@ int process_body(str notify_body, udomain_t * domain) {
 					contact_uri.len = strlen(contact_uri.s);
 					LM_DBG("Contact: %.*s\n",
 						contact_uri.len, contact_uri.s);
+
+					/* Add to Usrloc: */
+					result = process_contact(domain, &ul_record, parsed_aor.user, callid, cseq, expires, event, contact_uri);
 				
 					/* Process the result */
 					if (final_result != RESULT_CONTACTS_FOUND) final_result = result;
@@ -344,7 +347,7 @@ next_contact:
 			}
 		}
 next_registration:
-		if (ul_record) ul.release_urecord(ul_record);		
+		// if (ul_record) ul.release_urecord(ul_record);		
 		/* Unlock the domain for this AOR: */
 		ul.unlock_udomain(domain, &parsed_aor.user);
 
@@ -358,7 +361,7 @@ error:
 
 int reginfo_handle_notify(struct sip_msg* msg, char* domain, char* s2) {
  	str body;
-	int result = 0;
+	int result = 1;
 
   	/* If not done yet, parse the whole message now: */
   	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {

@@ -10,13 +10,13 @@ include ../../Makefile.defs
 
 NAME=cdp_avp.so
 
-DEFS+=-DSER_MOD_INTERFACE
-DEFS += -DCDP_FOR_SER
-DEFS += -I/usr/include/libxml2 
-
-#libs+=
-#includes+=
-
+ifeq ($(CFG_NAME),Wharf)
+	DEFS += -DWHARF
+else
+	DEFS+=-DSER_MOD_INTERFACE
+	DEFS += -DCDP_FOR_SER
+	DEFS += -I/usr/include/libxml2 
+endif
 
 include ../../Makefile.modules
 

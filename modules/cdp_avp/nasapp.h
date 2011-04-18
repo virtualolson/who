@@ -1,5 +1,5 @@
 /**
- * $Id: nasapp.h 930 2010-03-17 17:57:19Z vingarzan $
+ * $Id: nasapp.h 1020 2011-02-10 17:59:40Z vingarzan $
  *   
  * Copyright (C) 2009-2010 FhG Fokus
  *
@@ -178,6 +178,18 @@
  *  	 cdp_avp_add_ptr(...) and data_type AAA_AVP_LIST*
  *  	 cdp_avp_get(...) and data_type AAA_AVP_LIST 	
  */
+
+
+cdp_avp			(Accounting_Input_Octets,		0,	AAA_AVP_FLAG_MANDATORY,	Unsigned64,			uint64_t)
+
+cdp_avp			(Accounting_Input_Packets,		0,	AAA_AVP_FLAG_MANDATORY,	Unsigned64,			uint64_t)
+
+cdp_avp			(Accounting_Output_Octets,		0,	AAA_AVP_FLAG_MANDATORY,	Unsigned64,			uint64_t)
+
+cdp_avp			(Accounting_Output_Packets,		0,	AAA_AVP_FLAG_MANDATORY,	Unsigned64,			uint64_t)
+
+cdp_avp_ptr		(Filter_Id,						0,	AAA_AVP_FLAG_MANDATORY,	UTF8String,			str)
+
 
 
 cdp_avp_ptr		(Called_Station_Id,				0,	AAA_AVP_FLAG_MANDATORY,	UTF8String,			str)

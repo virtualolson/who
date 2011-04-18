@@ -1,5 +1,5 @@
 /**
- * $Id: avp_get_base_data_format.c 978 2010-08-11 10:57:37Z aon $
+ * $Id: avp_get_base_data_format.c 1067 2011-03-31 07:17:46Z aon $
  *   
  * Copyright (C) 2009-2010 FhG Fokus
  *

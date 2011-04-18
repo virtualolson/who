@@ -1,5 +1,5 @@
 /**
- * $Id: avp_get_base_data_format.h 926 2010-03-08 10:55:30Z vingarzan $
+ * $Id: avp_get_base_data_format.h 1076 2011-04-13 14:14:52Z aon $
  *   
  * Copyright (C) 2009-2010 FhG Fokus
  *
@@ -77,7 +77,7 @@
 		
 	#endif
 
-	#define EPOCH_UNIX_TO_EPOCH_NTP 220898800u // according to http://www.cis.udel.edu/~mills/y2k.html
+	#define EPOCH_UNIX_TO_EPOCH_NTP 2208988800u // according to http://www.cis.udel.edu/~mills/y2k.html
 	
 	/* 
 	 * RFC 3588 Basic AVP Data Types

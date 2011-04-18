@@ -1,5 +1,5 @@
 /**
- * $Id: globals.c 710 2009-08-07 21:41:31Z vingarzan $
+ * $Id: diameter_ims_code_app.h 1018 2011-02-10 14:00:57Z vingarzan $
  *  
  * Copyright (C) 2004-2006 FhG Fokus
  *
@@ -44,107 +44,26 @@
  */
  
 /**
- * \file
+ * \file 
+ * CDiameterPeer Diameter IMS IANA defined Application Identifiers
  * 
- * CDiameterPeer Global functions
- * 
- * These are only usefull if you use the CDiameterPeer without SER
- * 
- *  \author Dragos Vingarzan vingarzan -at- fokus dot fraunhofer dot de
- * 
+ *  \author Dragos Vingarzan dragos dot vingarzan -at- fokus dot fraunhofer dot de
+ *  
  */
+ 
+#ifndef __DIAMETER_IMS_CODE_APP_H
+#define __DIAMETER_IMS_CODE_APP_H
 
-#include "globals.h"
-#include "utils.h"
+/* Application Identifiers	*/
+#define IMS_Gq	16777222	/**< Gq interface between P-CSCF and PDF 		*/
+#define IMS_Cx	16777216	/**< Cx interface between I/S-CSCF and HSS 		*/
+#define IMS_Dx	16777216	/**< Cx interface between I/S-CSCF and SLF 		*/
+#define IMS_Sh	16777217	/**< Sh interface between AS and HSS	 		*/
+#define IMS_e2	16777231	/**< e2 interface between CLF and AF	 		*/
+#define IMS_Ph	16777217	/**< Sh interface between PresenceServer and HSS*/
+#define IMS_Rx  16777236	/**< Rx interface between P-CSCF and PCRF 		*/
+#define IMS_Gx	16777224	/**< Gx interface between PCRF and PCEF 		*/
+#define IMS_Rf  16777223    /**< Rf interface between P/I/S-CSCF and CDF, 
+								according to TS32.299 R7    */ 
 
-#ifdef CDP_FOR_SER
-
-#else
-
-#ifdef WHARF
-
-#else
-
-	unsigned long shm_mem_size = SHM_MEM_SIZE;
-	int memlog = L_ERR;
-	int memdbg = L_MEM;
-	int debug = L_MEM;
-	int log_facility = 1;
-	int log_stderr = 1;
-	int process_no=0;
-	
-#endif
-	
-#endif
-
-
-
-//str aaa_fqdn={"unset_fqdn",10};
-//str aaa_realm={"unset_realm",11};
-//str aaa_identity={"unset_identity",14};
-
-/** initialized the pkg and shm memory */
-int init_memory(int show_status)
-{
-#ifdef PKG_MALLOC
-	if (init_pkg_mallocs()==-1)
-		goto error;
-	if (show_status){
-		LOG(memlog, "Memory status (pkg):\n");
-		pkg_status();
-	}
-#endif
-
-#ifdef SHM_MEM
-	
-	if (init_shm_mallocs(
-#ifdef SER_MOD_INTERFACE
-				1
-#endif
-		)==-1)
-		goto error;
-	if (show_status){
-		LOG(memlog, "Memory status (shm):\n");
-		shm_status();
-	}
-#endif
-	return 1;
-error:
-	return 0;
-}	
-
-/** call it before exiting; if show_status==1, mem status is displayed */
-void destroy_memory(int show_status)
-{
-	/*clean-up*/
-	if (mem_lock)
-	    shm_unlock(); /* hack: force-unlock the shared memory lock in case
-	                             some process crashed and let it locked; this will
-	                             allow an almost gracious shutdown */
-#ifdef SHM_MEM
-	if (show_status){
-		LOG(memlog, "Memory status (shm):\n");
-		//shm_status();
-#ifndef SER_MOD_INTERFACE
-		shm_sums();
-#endif		
-	}
-	/* zero all shmem alloc vars that we still use */
-#ifdef WHARF	
-
-#else
-	shm_mem_destroy();
-#endif	
-#endif
-#ifdef PKG_MALLOC
-	if (show_status){
-		LOG(memlog, "Memory status (pkg):\n");
-		//pkg_status();
-#ifndef SER_MOD_INTERFACE
-		pkg_sums();
-#endif
-	}
-#endif
-}
-
-
+#endif /* __DIAMETER_IMS_CODE_APP_H */

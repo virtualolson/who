@@ -10,10 +10,13 @@ auto_gen=
 NAME=cdp.so
 
 DEFS+=-DSER_MOD_INTERFACE
-DEFS += -DCDP_FOR_SER
+ifeq ($(CFG_NAME),Wharf)
+	DEFS += -DWHARF
+else
+	DEFS += -DCDP_FOR_SER
+endif	
 
 DEFS += -I/usr/include/libxml2 
 LIBS += -L$(LOCALBASE)/lib -lxml2 -lrt
 
 include ../../Makefile.modules
-

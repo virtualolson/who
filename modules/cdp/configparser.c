@@ -1,5 +1,5 @@
 /**
- * $Id: configparser.c 1010 2010-11-17 17:02:50Z vingarzan $
+ * $Id: configparser.c 1051 2011-03-24 15:58:12Z vingarzan $
  *  
  * Copyright (C) 2004-2006 FhG Fokus
  *
@@ -250,6 +250,10 @@ dp_config* parse_dp_config(xmlDocPtr doc)
 	xc = xmlGetProp(root,(xmlChar*)"QueueLength");
 	if (xc) {x->queue_length = atoi((char*)xc);xmlFree(xc);}
 	else x->queue_length = 32;
+
+	xc = xmlGetProp(root,(xmlChar*)"ConnectTimeout");
+	if (xc) {x->connect_timeout= atoi((char*)xc);xmlFree(xc);}
+	else x->connect_timeout = 5;
 
 	xc = xmlGetProp(root,(xmlChar*)"TransactionTimeout");
 	if (xc) {x->transaction_timeout = atoi((char*)xc);xmlFree(xc);}

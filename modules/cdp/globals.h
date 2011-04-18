@@ -62,6 +62,13 @@
 #define DPNAME "CDiameterPeer"
 #define DPVERSION "0.0.2"
 
+
+#ifdef CDP_FOR_SER
+#else
+extern unsigned long shm_mem_size;
+extern int memlog;
+#endif
+
 extern int process_no;
 
 int init_memory(int show_status);

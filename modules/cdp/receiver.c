@@ -1,5 +1,5 @@
 /**
- * $Id: receiver.c 1010 2010-11-17 17:02:50Z vingarzan $
+ * $Id: receiver.c 1052 2011-03-24 16:02:43Z vingarzan $
  *  
  * Copyright (C) 2004-2006 FhG Fokus
  *
@@ -487,6 +487,21 @@ done:
 	}
 	/* remove pid from list of running processes */
 	dp_del_pid(getpid());
+	
+#ifdef CDP_FOR_SER
+			
+#else
+#ifdef PKG_MALLOC
+	#ifdef PKG_MALLOC
+		LOG(memlog, "Receiver[%.*s] Memory status (pkg):\n",
+				p?p->fqdn.len:0,p?p->fqdn.s:0);
+		//pkg_status();
+		#ifdef pkg_sums
+			pkg_sums();
+		#endif 
+	#endif
+#endif
+#endif		
 		
 	LOG(L_INFO,"INFO:receiver_process(): [%.*s]... Receiver process finished.\n",
 			p?p->fqdn.len:0,p?p->fqdn.s:0);
@@ -863,13 +878,44 @@ int peer_connect(peer *p)
 			continue;
 		}
 
-		if (connect(sock,ainfo->ai_addr,ainfo->ai_addrlen)!=0) {
-			LOG(L_WARN,"WARNING:peer_connect(): Error opening connection to to %s port %s >%s\n",
-				host,serv,strerror(errno));
-			close(sock);		
-			continue;
+		{// Connect with timeout
+			int x;
+			x=fcntl(sock,F_GETFL,0);
+			fcntl(sock,F_SETFL,x | O_NONBLOCK);
+			int res = connect(sock,ainfo->ai_addr,ainfo->ai_addrlen);
+			if (res<0){
+				if (errno==EINPROGRESS){
+					  struct timeval tv={
+						  .tv_sec = config->connect_timeout,
+						  .tv_usec = 0,
+					  };
+					  fd_set myset; 
+					  FD_ZERO(&myset); 
+					  FD_SET(sock, &myset);
+					  if (select(sock+1, NULL, &myset, NULL, &tv) > 0) { 
+						  socklen_t lon = sizeof(int);
+						  int  valopt;
+						  getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon); 
+						  if (valopt) { 
+					    	  LOG(L_WARN,"WARNING:peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(valopt));
+					    	  close(sock);		
+					    	  continue;
+					      } 
+					  }else{ 
+				    	  LOG(L_WARN,"WARNING:peer_connect(): Timeout or error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
+				    	  close(sock);		
+				    	  continue;
+					  } 					  
+				}
+			}else{
+				LOG(L_WARN,"WARNING:peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
+				close(sock);		
+				continue;
+			}
+			
+			x=fcntl(sock,F_GETFL,0);
+			fcntl(sock,F_SETFL,x & (~O_NONBLOCK));
 		}
-	
 		setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&option,sizeof(option));
 	
 		LOG(L_INFO,"INFO:peer_connect(): Peer %.*s:%d connected\n",p->fqdn.len,p->fqdn.s,p->port);

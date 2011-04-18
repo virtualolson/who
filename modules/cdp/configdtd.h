@@ -1,5 +1,5 @@
 /**
- * $Id: configdtd.h 920 2010-03-05 19:07:50Z vingarzan $
+ * $Id: configdtd.h 1051 2011-03-24 15:58:12Z vingarzan $
  *  
  * Copyright (C) 2004-2006 FhG Fokus
  *
@@ -65,6 +65,7 @@
 	Tc			CDATA				#REQUIRED\
 	Workers		CDATA				#REQUIRED\
 	QueueLength	CDATA				#REQUIRED\
+	ConnectTimeout	   CDATA		#IMPLIED\
 	TransactionTimeout CDATA		#IMPLIED\
 	SessionsHashSize CDATA			#IMPLIED\
 	DefaultAuthSessionTimeout CDATA	#IMPLIED\

@@ -1,5 +1,5 @@
 /**
- * $Id: config.c 920 2010-03-05 19:07:50Z vingarzan $
+ * $Id: config.c 1051 2011-03-24 15:58:12Z vingarzan $
  *  
  * Copyright (C) 2004-2006 FhG Fokus
  *
@@ -194,6 +194,7 @@ inline void log_dp_config(int level,dp_config *x)
 	LOG(level,"\tTc      : %d\n",x->tc);
 	LOG(level,"\tWorkers : %d\n",x->workers);
 	LOG(level,"\tQueueLen: %d\n",x->queue_length);
+	LOG(level,"\tConnTime: %d\n",x->connect_timeout);
 	LOG(level,"\tTranTime: %d\n",x->transaction_timeout);
 	LOG(level,"\tSessHash: %d\n",x->sessions_hash_size);
 	LOG(level,"\tDefAuthT: %d\n",x->default_auth_session_timeout);

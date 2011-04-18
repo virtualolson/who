@@ -215,6 +215,20 @@ void timer_process(int returns)
 	
 	LOG(L_INFO,"INFO:... Timer process finished\n");
 	if (!returns) {
+#ifdef CDP_FOR_SER
+#else
+#ifdef PKG_MALLOC
+	#ifdef PKG_MALLOC
+		LOG(memlog, "Timer Memory status (pkg):\n");
+		//pkg_status();
+		#ifdef pkg_sums
+			pkg_sums();
+		#endif 
+	#endif
+#endif
+		dp_del_pid(getpid());		
+#endif		
+		
 		exit(0);
 	}
 }

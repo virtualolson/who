@@ -1,5 +1,5 @@
 /**
- * $Id: config.h 920 2010-03-05 19:07:50Z vingarzan $
+ * $Id: config.h 1051 2011-03-24 15:58:12Z vingarzan $
  *  
  * Copyright (C) 2004-2006 FhG Fokus
  *
@@ -118,6 +118,7 @@ typedef struct {
 	int workers;				/**< Number of worker-processes to fork */
 	int queue_length;			/**< Length of the message queue; when it is filled, the server part will
 									 block until workers will finish work on at least one item in the queue */
+	int connect_timeout;		/**< Connect timeout for outbound connections */
 	int transaction_timeout;	/**< Transaction timeout duration */
 	
 	int sessions_hash_size;		/**< Size of the sessions hash table */									 

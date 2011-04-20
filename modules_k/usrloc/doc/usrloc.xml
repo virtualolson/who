@@ -40,13 +40,6 @@
 			<email>bogdan@voice-system.ro</email>
 		</address>
 		</editor>
-		<editor>
-		<firstname>Carsten</firstname>
-		<surname>Bock</surname>
-		<address>
-			<email>carsten@ng-voice.com</email>
-		</address>
-		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2003</year>
@@ -55,10 +48,6 @@
 	<copyright>
 		<year>2005</year>
 		<holder>&voicesystem;</holder>
-	</copyright>
-	<copyright>
-		<year>2011</year>
-		<holder>Carsten Bock, carsten@ng-voice.com</holder>
 	</copyright>
 	<revhistory>
 		<revision>

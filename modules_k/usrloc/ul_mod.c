@@ -85,7 +85,6 @@ MODULE_VERSION
 #define SOCK_COL       "socket"
 #define METHODS_COL    "methods"
 #define LAST_MOD_COL   "last_modified"
-#define REG_AVPS_COL   "reg_avps"
 
 static int mod_init(void);                          /*!< Module initialization function */
 static void destroy(void);                          /*!< Module destroy function */
@@ -118,8 +117,7 @@ str received_col    = str_init(RECEIVED_COL);		/*!< Name of column containing tr
 str path_col        = str_init(PATH_COL);		/*!< Name of column containing the Path header */
 str sock_col        = str_init(SOCK_COL);		/*!< Name of column containing the received socket */
 str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the supported methods */
-str last_mod_col    = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
-str reg_avps_col    = str_init(REG_AVPS_COL);		/*!< Name of column containing AVPs for a contact */
+str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
 str db_url          = str_init(DEFAULT_DB_URL);		/*!< Database URL */
 int timer_interval  = 60;				/*!< Timer interval in seconds */
 int db_mode         = 0;				/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
@@ -170,7 +168,6 @@ static param_export_t params[] = {
 	{"path_column",       STR_PARAM, &path_col.s      },
 	{"socket_column",     STR_PARAM, &sock_col.s      },
 	{"methods_column",    STR_PARAM, &methods_col.s   },
-	{"reg_avps_column",   STR_PARAM, &reg_avps_col.s  },
 	{"matching_mode",     INT_PARAM, &matching_mode   },
 	{"cseq_delay",        INT_PARAM, &cseq_delay      },
 	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
@@ -264,7 +261,6 @@ static int mod_init(void)
 	sock_col.len = strlen(sock_col.s);
 	methods_col.len = strlen(methods_col.s);
 	last_mod_col.len = strlen(last_mod_col.s);
-	reg_avps_col.len = strlen(reg_avps_col.s);
 	db_url.len = strlen(db_url.s);
 
 	if(ul_hash_size<=1)

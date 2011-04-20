@@ -223,8 +223,11 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			/* write path */
 			memcpy(cp, &p1_len, sizeof(p1_len));
 			cp = (char*)cp + sizeof(p1_len);
-			memcpy(cp, p1, p1_len);
-			cp = (char*)cp + p1_len;
+			/* copy path only if exist */
+			if(p1_len){
+				memcpy(cp, p1, p1_len);
+				cp = (char*)cp + p1_len;
+			}
 
 			len -= needed;
 		} /* row cycle */
@@ -582,7 +585,7 @@ void print_all_udomains(FILE* _f)
  */
 unsigned long get_number_of_users(void)
 {
-	int numberOfUsers = 0;
+	long numberOfUsers = 0;
 
 	dlist_t* current_dlist;
 	

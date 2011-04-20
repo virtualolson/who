@@ -46,8 +46,7 @@
 #include "usrloc.h"
 #include "urecord.h"
 #include "ucontact.h"
-#include "reg_avps_db.h"
-#include "../../parser/parse_uri.h"
+#include "usrloc.h"
 
 /*!
  * \brief Create a new contact structure
@@ -69,17 +68,11 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	memset(c, 0, sizeof(ucontact_t));
 
 	if (shm_str_dup( &c->c, _contact) < 0) goto error;
-	if (parse_uri(c->c.s, c->c.len, &c->parsed_c) < 0)
-		LM_ERR("Error while parsing Contact URI\n");
-
 	if (shm_str_dup( &c->callid, _ci->callid) < 0) goto error;
 	if (shm_str_dup( &c->user_agent, _ci->user_agent) < 0) goto error;
 
 	if (_ci->received.s && _ci->received.len) {
 		if (shm_str_dup( &c->received, &_ci->received) < 0) goto error;
-		if (parse_uri(c->received.s, c->received.len, &c->parsed_received) < 0)
-			LM_ERR("Error while parsing Contact URI\n");
-
 	}
 	if (_ci->path && _ci->path->len) {
 		if (shm_str_dup( &c->path, _ci->path) < 0) goto error;
@@ -96,7 +89,6 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	c->cflags = _ci->cflags;
 	c->methods = _ci->methods;
 	c->last_modified = _ci->last_modified;
-	c->avps = _ci->avps;
 
 	return c;
 error:
@@ -396,8 +388,8 @@ int st_flush_ucontact(ucontact_t* _c)
 int db_insert_ucontact(ucontact_t* _c)
 {
 	char* dom;
-	db_key_t keys[16];
-	db_val_t vals[16];
+	db_key_t keys[15];
+	db_val_t vals[15];
 	
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -417,8 +409,7 @@ int db_insert_ucontact(ucontact_t* _c)
 	keys[11] = &sock_col;
 	keys[12] = &methods_col;
 	keys[13] = &last_mod_col;
-	keys[14] = &reg_avps_col;
-	keys[15] = &domain_col;
+	keys[14] = &domain_col;
 
 	vals[0].type = DB1_STR;
 	vals[0].nul = 0;
@@ -498,46 +489,30 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[13].nul = 0;
 	vals[13].val.time_val = _c->last_modified;
 
-	vals[14].type = DB1_STR;
-	if (_c->avps) {
-		if (serialize_avps(_c->avps, &vals[14].val.str_val) < 0) {
-			ERR("Error while serializing AVPs\n");
-			return -1;
-		}
-		vals[14].nul = 0;
-	} else {
-		vals[14].nul = 1;
-		vals[14].val.str_val.s = 0;
-		vals[14].val.str_val.len = 0;
-	}
-
 	if (use_domain) {
-		vals[15].type = DB1_STR;
-		vals[15].nul = 0;
+		vals[14].type = DB1_STR;
+		vals[14].nul = 0;
 
 		dom = memchr(_c->aor->s, '@', _c->aor->len);
 		if (dom==0) {
 			vals[0].val.str_val.len = 0;
-			vals[15].val.str_val = *_c->aor;
+			vals[14].val.str_val = *_c->aor;
 		} else {
 			vals[0].val.str_val.len = dom - _c->aor->s;
-			vals[15].val.str_val.s = dom + 1;
-			vals[15].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+			vals[14].val.str_val.s = dom + 1;
+			vals[14].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 		}
 	}
-
+	
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
 		LM_ERR("sql use_table failed\n");
-		if (vals[14].val.str_val.s) pkg_free(vals[14].val.str_val.s);
 		return -1;
 	}
 
-	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (16) : (15)) < 0) {
+	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (15) : (14)) < 0) {
 		LM_ERR("inserting contact in db failed\n");
-		if (vals[14].val.str_val.s) pkg_free(vals[14].val.str_val.s);
 		return -1;
 	}
-	if (vals[14].val.str_val.s) pkg_free(vals[14].val.str_val.s);
 
 	return 0;
 }
@@ -554,8 +529,8 @@ int db_update_ucontact(ucontact_t* _c)
 	db_key_t keys1[4];
 	db_val_t vals1[4];
 
-	db_key_t keys2[12];
-	db_val_t vals2[12];
+	db_key_t keys2[11];
+	db_val_t vals2[11];
 
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -576,7 +551,6 @@ int db_update_ucontact(ucontact_t* _c)
 	keys2[8] = &sock_col;
 	keys2[9] = &methods_col;
 	keys2[10] = &last_mod_col;
-	keys2[11] = &reg_avps_col;
 
 	vals1[0].type = DB1_STR;
 	vals1[0].nul = 0;
@@ -650,19 +624,6 @@ int db_update_ucontact(ucontact_t* _c)
 	vals2[10].nul = 0;
 	vals2[10].val.time_val = _c->last_modified;
 
-	vals2[11].type = DB1_STR;
-	if (_c->avps) {
-		if (serialize_avps(_c->avps, &vals2[11].val.str_val) < 0) {
-			ERR("Error while serializing AVPs\n");
-			return -1;
-		}
-		vals2[11].nul = 0;
-	} else {
-		vals2[11].nul = 1;
-		vals2[11].val.str_val.s = 0;
-		vals2[11].val.str_val.len = 0;
-	}
-
 	if (use_domain) {
 		vals1[3].type = DB1_STR;
 		vals1[3].nul = 0;
@@ -679,17 +640,14 @@ int db_update_ucontact(ucontact_t* _c)
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
 		LM_ERR("sql use_table failed\n");
-		if (vals2[11].val.str_val.s) pkg_free(vals2[11].val.str_val.s);
 		return -1;
 	}
 
 	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, 
-	(use_domain) ? (4) : (3), 12) < 0) {
+	(use_domain) ? (4) : (3), 11) < 0) {
 		LM_ERR("updating database failed\n");
-		if (vals2[11].val.str_val.s) pkg_free(vals2[11].val.str_val.s);
 		return -1;
 	}
-	if (vals2[11].val.str_val.s) pkg_free(vals2[11].val.str_val.s);	
 
 	return 0;
 }

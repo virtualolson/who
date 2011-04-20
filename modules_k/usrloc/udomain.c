@@ -47,7 +47,7 @@
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "usrloc.h"
 #include "utime.h"
-#include "reg_avps_db.h"
+#include "usrloc.h"
 
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
@@ -351,7 +351,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 	char uri[MAX_URI_SIZE];
 	ucontact_info_t *ci;
 	db_row_t *row;
-	db_key_t columns[16];
+	db_key_t columns[15];
 	db1_res_t* res = NULL;
 	str user, contact;
 	char* domain;
@@ -375,8 +375,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 	columns[11] = &sock_col;
 	columns[12] = &methods_col;
 	columns[13] = &last_mod_col;
-	columns[14] = &reg_avps_col;
-	columns[15] = &domain_col;
+	columns[14] = &domain_col;
 
 	if (ul_dbf.use_table(_c, _d->name) < 0) {
 		LM_ERR("sql use_table failed\n");
@@ -388,7 +387,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 #endif
 
 	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(16):(15), 0,
+		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(15):(14), 0,
 		0) < 0) {
 			LM_ERR("db_query (1) failed\n");
 			return -1;
@@ -398,7 +397,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 			return -1;
 		}
 	} else {
-		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(16):(15), 0,
+		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(15):(14), 0,
 		&res) < 0) {
 			LM_ERR("db_query failed\n");
 			return -1;
@@ -434,8 +433,8 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 			}
 
 			if (use_domain) {
-				domain = (char*)VAL_STRING(ROW_VALUES(row) + 15);
-				if (VAL_NULL(ROW_VALUES(row)+15) || domain==0 || domain[0]==0){
+				domain = (char*)VAL_STRING(ROW_VALUES(row) + 14);
+				if (VAL_NULL(ROW_VALUES(row)+14) || domain==0 || domain[0]==0){
 					LM_CRIT("empty domain record for user %.*s...skipping\n",
 							user.len, user.s);
 					continue;
@@ -466,11 +465,6 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 				unlock_udomain(_d, &user);
 				goto error1;
 			}
-			
-			if (!VAL_NULL(ROW_VALUES(row)+14)) {
-				c->avps = deserialize_avps(&VAL_STR(ROW_VALUES(row)+14));	
-			}
-
 
 			/* We have to do this, because insert_ucontact sets state to CS_NEW
 			 * and we have the contact in the database already */
@@ -514,7 +508,7 @@ error:
 urecord_t* db_load_urecord(db1_con_t* _c, udomain_t* _d, str *_aor)
 {
 	ucontact_info_t *ci;
-	db_key_t columns[14];
+	db_key_t columns[13];
 	db_key_t keys[2];
 	db_key_t order;
 	db_val_t vals[2];
@@ -560,7 +554,6 @@ urecord_t* db_load_urecord(db1_con_t* _c, udomain_t* _d, str *_aor)
 	columns[10] = &sock_col;
 	columns[11] = &methods_col;
 	columns[12] = &last_mod_col;
-	columns[13] = &reg_avps_col;
 
 	if (desc_time_order)
 		order = &last_mod_col;
@@ -572,7 +565,7 @@ urecord_t* db_load_urecord(db1_con_t* _c, udomain_t* _d, str *_aor)
 		return 0;
 	}
 
-	if (ul_dbf.query(_c, keys, 0, vals, columns, (use_domain)?2:1, 14, order,
+	if (ul_dbf.query(_c, keys, 0, vals, columns, (use_domain)?2:1, 13, order,
 				&res) < 0) {
 		LM_ERR("db_query failed\n");
 		return 0;
@@ -603,11 +596,6 @@ urecord_t* db_load_urecord(db1_con_t* _c, udomain_t* _d, str *_aor)
 			ul_dbf.free_result(_c, res);
 			return 0;
 		}
-
-		if (!VAL_NULL(ROW_VALUES(RES_ROWS(res+13) + i))) {
-			c->avps = deserialize_avps(&VAL_STR(ROW_VALUES(RES_ROWS(res+13) + i)));	
-		}
-
 
 		/* We have to do this, because insert_ucontact sets state to CS_NEW
 		 * and we have the contact in the database already */

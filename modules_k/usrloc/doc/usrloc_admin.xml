@@ -409,24 +409,6 @@ modparam("usrloc", "path_column", "path")
 	</section>
 
 	<section>
-		<title><varname>reg_avps_column</varname> (string)</title>
-		<para>
-		    Name of column containing the per Contact AVPs in a serialized format.
-		</para>
-		<para>
-		    Default value is "reg_avps".
-		</para>
-		<example>
-		    <title>Set <varname>reg_avps_column</varname> parameter</title>
-		    <programlisting>
-...
-modparam("usrloc", "reg_avps_column", "reg_avps")
-...
-		    </programlisting>
-		</example>
-	</section>
-
-	<section>
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 		If the domain part of the user should be also saved and used for

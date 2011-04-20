@@ -623,35 +623,6 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		</programlisting>
 		</example>
 	</section>
-
-	<section>
-		<title><varname>reg_avp</varname> (string)</title>
-		<para>
-		The parameter "reg_avp" contains the AVP's which should be stored
-		and restored together with a contact.
-		The parameter can be defined multiple times, for each AVP once.
-		</para>
-		<para>
-		<emphasis>
-			Default value is NULL (disabled).
-		</emphasis>
-		</para>
-		<para>
-		<emphasis>
-			THIS FUNCTIONALITY IS UNDER CONSTRUCTION.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>reg_avp</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("registrar", "reg_avp", "$avp(s:parameter1)")
-modparam("registrar", "reg_avp", "$avp(i:2)")
-...
-		</programlisting>
-		</example>
-	</section>
-
 	</section>
 
 	
@@ -665,12 +636,9 @@ modparam("registrar", "reg_avp", "$avp(i:2)")
 		The function processes a REGISTER message. It can add, remove or 
 		modify usrloc records depending on Contact and Expires HFs in the 
 		REGISTER message. On success and when called from the REQUEST_ROUTE, 
-		200 OK will be returned listing all contacts that are currently in 
+		200 OK will be returned listing all	contacts that are currently in 
 		usrloc. On an error, error message will be send with a short
 		description in reason phrase.
-		</para>
-		<para>
-		This function will save the AVP's for this contact.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -722,9 +690,6 @@ save("location");
 		<para>
 		Same as <function>save()</function> but it accepts a set of flags for
 		controlling its behaviour.
-		</para>
-		<para>
-		This function will save the AVP's for this contact.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -787,9 +752,6 @@ save("location","0x01");
 		the message (depending on append_branches parameter value).
 		</para>
 		<para>
-		This function will restore the AVP's for this contact.
-		</para>
-		<para>
 		If the method_filtering option is enabled, the lookup function
 		will return only the contacts that support the method of the
 		processed request.
@@ -850,11 +812,8 @@ switch ($retcode) {
 		<para>
 		The function returns true if the AOR in the Request-URI is 
 		registered, false otherwise.  The function does not modify the 
-		message being processed, it neither rewrites the Request-URI if a 
-		contact is found nor appends branches.
-		</para>
-		<para>
-		This function will restore the AVP's for this contact.
+		message being process, it neither rewrites the Request-URI if a 
+		contact is found not append branches.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>

@@ -52,78 +52,6 @@
 #define allowed_method(_msg, _c) \
 	( !method_filtering || ((_msg)->REQ_METHOD)&((_c)->methods) )
 
-/*! \brief
- * Removes a given AVP from the current message
- */
-static void remove_avp(avp_t *avp) {
-	struct search_state ss;
-	avp_name_t name;
-	avp_t *a;
-	str *s;
-	
-	if (avp->flags & AVP_NAME_STR) {
-		s = get_avp_name(avp);
-		if (s) name.s = *s;
-		else {
-			name.s.s = NULL;
-			name.s.len = 0;
-		}
-	} else name.n = avp->id;
-	
-	a = search_first_avp(avp->flags, name, 0, &ss);
-	while(a) {
-		destroy_avp(a);
-		a = search_next_avp(&ss, 0);
-	}
-}
-
-/*! \brief
- * Restores the AVP's from a given Contact
- */
-static int restore_reg_avps(ucontact_t* c)
-{
-	avp_t *avp;
-	avp_value_t val;
-	avp_name_t name;
-	str *s;	
-	
-	LM_DBG("Restoring AVP's: %p / %p\n", c, c->avps);
-	
-	/* remove all these AVPs ? */
-	avp = c->avps;
-	while (avp) {
-		remove_avp(avp);
-		avp = avp->next;
-	}
-
-	/* add stored AVPs */
-	avp = c->avps;
-	while (avp) {
-		LM_DBG("avp %p\n", avp);
-		get_avp_val(avp, &val);
-		if (avp->flags & AVP_NAME_STR) {
-			s = get_avp_name(avp);
-			if (s) name.s = *s;
-			else {
-				name.s.s = NULL;
-				name.s.len = 0;
-			}
-			LM_DBG("AVP s:%.*s\n", name.s.len, name.s.s);
-		} else {
-			name.n = avp->id;
-			LM_DBG("AVP i:%d\n", name.n);
-		}
-		if ((val.s.s) && (val.s.len > 0))	
-			LM_DBG("Val s:%.*s\n", val.s.len, val.s.s);
-		LM_DBG("Val i:%d\n", val.n);
-		/* modify flags here? */
-		add_avp(avp->flags, name, val);
-		
-		avp = avp->next;
-	}
-	
-	return 0;
-}
 
 /*! \brief
  * Lookup contact in the database and rewrite Request-URI
@@ -216,9 +144,6 @@ int lookup(struct sip_msg* _m, udomain_t* _d)
 
 		if (ptr->sock)
 			set_force_socket(_m, ptr->sock);
-		
-		/* Restore the AVP's for this contact: */
-		restore_reg_avps(ptr);
 
 		ptr = ptr->next;
 	}
@@ -302,10 +227,6 @@ int r_registered(struct sip_msg* _m, char* _t, str * _uri)
 			if (match_callid.s.s && /* optionally enforce tighter matching w/ Call-ID */
 				memcmp(match_callid.s.s,ptr->callid.s,match_callid.s.len))
 				continue;
-
-			/* Restore the AVP's for this contact: */
-			restore_reg_avps(ptr);
-
 			ul.release_urecord(r);
 			ul.unlock_udomain((udomain_t*)_t, &aor);
 			LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));

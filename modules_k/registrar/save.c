@@ -59,6 +59,7 @@
 #include "../../dset.h"
 #include "../../mod_fix.h"
 #include "../../lib/kcore/cmpapi.h"
+#include "../../lib/kcore/statistics.h"
 #ifdef USE_TCP
 #include "../../tcp_server.h"
 #endif
@@ -72,107 +73,8 @@
 #include "path.h"
 #include "save.h"
 #include "config.h"
-/* Include Pseudo-Variable Operations */
-#include "../../pvar.h"
 
 static int mem_only = 0;
-
-/*  FIXME - ugly */
-extern avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val);
-
-/*! \brief
- * Create a duplicate from an AVP
- */
-static inline avp_t *avp_dup(avp_t *avp)
-{
-	avp_value_t val;
-	avp_name_t name;
-	str *s;
-	
-	if (avp) {
-		get_avp_val(avp, &val);
-		if (avp->flags & AVP_NAME_STR) {
-			s = get_avp_name(avp);
-			if (s) name.s = *s;
-			else {
-				name.s.s = NULL;
-				name.s.len = 0;
-			}
-		}
-		else name.n = avp->id;
-		return create_avp(avp->flags, name, val);
-	}
-	return NULL;
-}
-
-/*! \brief
- * Removes all AVP's from a contact
- */
-static void remove_avp_contact(struct ucontact *c) {
-	avp_t *n;
-	
-	while (c->avps) {
-		n = c->avps->next;
-		shm_free(c->avps);
-		c->avps = n;
-	}
-}
-
-static int create_avp_list(avp_t * avp_list) {
-	struct search_state ss;
-	struct reg_avp * n;
-	struct usr_avp *avp, *dup;
-	avp_t *first, *last;
-
-	/* Initialize some variables */
-	last = NULL;
-	first = NULL;
-	
-	/* Look through the List of AVP's: */	
-	n = reg_avp_list;
-	while (n) {
-		/* Search for the AVP */
-		avp = search_first_avp(n->type, n->name, 0, &ss);
-		while(avp) {
-			dup = avp_dup(avp);
-			if (dup) {
-				/* add AVP into list */
-				if (last) last->next = dup;
-				else first = dup;
-				last = dup;
-			}
-			avp = search_next_avp(&ss, 0);
-		}
-		n = n->next;
-	}
-	
-	/* Save the AVP into the Contact */
-	avp_list = first;
-	
-	return 0;
-}
-
-
-/*! \brief
- * Adds the Reg-AVPs to a contact
- */
-static int new_reg_avps(ucontact_info_t* c)
-{
-	return create_avp_list(c->avps);
-}
-
-/*! \brief
- * Adds the Reg-AVPs to a contact
- */
-static int update_reg_avps(struct ucontact *c)
-{
-	if (c) {
-		/* Remove existing AVP's from this contact: */
-		remove_avp_contact(c);
-		return create_avp_list(c->avps);
-	}
-	return -1;
-}
 
 /*! \brief
  * Process request that contained a star, in that case, 
@@ -522,16 +424,12 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 
 		if ( r->contacts==0 ||
 		ul.get_ucontact(r, &_c->uri, ci->callid, ci->path, ci->cseq+1, &c) != 0) {
-			/* Add the AVPs to this Contact */
-			new_reg_avps(ci);
 			if (ul.insert_ucontact( r, &_c->uri, ci, &c) < 0) {
 				rerrno = R_UL_INS_C;
 				LM_ERR("failed to insert contact\n");
 				goto error;
 			}
 		} else {
-			/* Add the AVPs to this Contact */
-			update_reg_avps(c);
 			if (ul.update_ucontact( r, c, ci) < 0) {
 				rerrno = R_UL_UPD_C;
 				LM_ERR("failed to update contact\n");
@@ -703,8 +601,6 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				LM_ERR("failed to extract contact info\n");
 				goto error;
 			}
-			/* Add the AVPs to this Contact */
-			update_reg_avps(c);
 
 			if (ul.insert_ucontact( _r, &_c->uri, ci, &c) < 0) {
 				rerrno = R_UL_INS_C;
@@ -760,8 +656,6 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 					}
 					updated=1;
 				}
-				/* Add the AVPs to this Contact */
-				update_reg_avps(c);
 				if (ul.update_ucontact(_r, c, ci) < 0) {
 					rerrno = R_UL_UPD_C;
 					LM_ERR("failed to update contact\n");

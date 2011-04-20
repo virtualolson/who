@@ -65,5 +65,6 @@
 #define IMS_Gx	16777224	/**< Gx interface between PCRF and PCEF 		*/
 #define IMS_Rf  16777223    /**< Rf interface between P/I/S-CSCF and CDF, 
 								according to TS32.299 R7    */ 
+#define IMS_Ro  4               /**< Ro interface between P/I/S-CSCF and OCS, according to TS32.299 R7    */
 
 #endif /* __DIAMETER_IMS_CODE_APP_H */

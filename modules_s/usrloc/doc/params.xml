@@ -177,6 +177,24 @@ modparam("usrloc", "received_column", "received")
 	</example>
     </section>
 
+    <section id="usrloc.reg_avps_column">
+	<title><varname>reg_avps_column</varname> (string)</title>
+	<para>
+	    Name of column containing the per Contact AVPs in a serialized format.
+	</para>
+	<para>
+	    Default value is "reg_avps".
+	</para>
+	<example>
+	    <title>Set <varname>reg_avps_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("usrloc", "reg_avps_column", "reg_avps")
+...
+	    </programlisting>
+	</example>
+    </section>
+
     <section id="usrloc.db_url">
 	<title><varname>db_url</varname> (string)</title>
 	<para>

@@ -64,6 +64,9 @@ int load_rr( struct rr_binds *rrb )
 	rrb->get_route_param   = get_route_param;
 	rrb->register_rrcb     = register_rrcb;
 	rrb->append_fromtag    = append_fromtag;
+	rrb->get_remoteuri     = get_remoteuri;
+	rrb->get_routeset      = get_routeset;
+	rrb->rr_type           = rr_type;
 
 	return 1;
 }

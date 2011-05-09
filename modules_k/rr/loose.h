@@ -38,6 +38,10 @@
 #define RR_FLOW_DOWNSTREAM  (1<<0)
 #define RR_FLOW_UPSTREAM    (1<<1)
 
+/*!
+ * \brief Next-Hop is a strict or loose-router?
+ */
+int rr_type;
 
 /*!
  * \brief Do loose routing as per RFC3261
@@ -92,5 +96,20 @@ int is_direction(struct sip_msg *msg, int dir);
  */
 int get_route_param( struct sip_msg *msg, str *name, str *val);
 
+/*!
+ * \brief Gets the URI of the remote destination, based on the route-set.
+ *
+ * \param msg - request that will have the Route header parameter searched
+ * \return A str with the URI of the remote target.
+ */
+str* get_remoteuri(struct sip_msg *msg);
+
+/*!
+ * \brief Returns a list of the URI's from the route-headers
+ *
+ * \param msg - request that will have the Route header parameter searched
+ * \return An array of str with the URI of the next hops.
+ */
+str* get_routeset(struct sip_msg *msg, int *nr_routes);
 
 #endif /* LOOSE_H */

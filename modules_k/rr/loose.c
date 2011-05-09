@@ -43,6 +43,7 @@
 #include "loose.h"
 #include "rr_cb.h"
 #include "rr_mod.h"
+#include "api.h"
 
 
 #define RR_ERROR -1		/*!< An error occured while processing route set */
@@ -639,6 +640,8 @@ static inline int after_strict(struct sip_msg* _m)
 
 	if (is_strict(&puri.params)) {
 		LM_DBG("Next hop: '%.*s' is strict router\n", uri.len, ZSW(uri.s));
+		rr_type = RR_TYPE_STRICT_STRICT;
+
 		/* Previous hop was a strict router and the next hop is strict
 		 * router too. There is no need to save R-URI again because it
 		 * is saved already. In fact, in this case we will behave exactly
@@ -671,6 +674,7 @@ static inline int after_strict(struct sip_msg* _m)
 	} else {
 		LM_DBG("Next hop: '%.*s' is loose router\n",
 			uri.len, ZSW(uri.s));
+		rr_type = RR_TYPE_STRICT_LOOSE;
 
 		if(get_maddr_uri(&uri, &puri)!=0) {
 			LM_ERR("failed to check maddr\n");
@@ -800,6 +804,9 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			if (res > 0) { /* No next route found */
 				LM_DBG("No next URI found\n");
 				status = (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
+
+				rr_type = RR_TYPE_LOOSE_LOOSE;
+
 				goto done;
 			}
 			rt = (rr_t*)hdr->parsed;
@@ -835,6 +842,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 				if (res > 0) { /* No next route found */
 					LM_DBG("no next URI found\n");
 					status = (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
+					rr_type = RR_TYPE_LOOSE_LOOSE;
 					goto done;
 				}
 				rt = (rr_t*)hdr->parsed;
@@ -858,6 +866,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	LM_DBG("URI to be processed: '%.*s'\n", uri.len, ZSW(uri.s));
 	if (is_strict(&puri.params)) {
 		LM_DBG("Next URI is a strict router\n");
+		rr_type = RR_TYPE_LOOSE_STRICT;
 		if (handle_sr(_m, hdr, rt) < 0) {
 			LM_ERR("failed to handle strict router\n");
 			return RR_ERROR;
@@ -865,7 +874,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	} else {
 		/* Next hop is loose router */
 		LM_DBG("Next URI is a loose router\n");
-
+		rr_type = RR_TYPE_LOOSE_LOOSE;
 		if(get_maddr_uri(&uri, &puri)!=0) {
 			LM_ERR("checking maddr failed\n");
 			return RR_ERROR;
@@ -905,6 +914,7 @@ done:
 int loose_route(struct sip_msg* _m)
 {
 	int ret;
+	rr_type = 0;
 
 	if (find_first_route(_m) != 0) {
 		LM_DBG("There is no Route HF\n");
@@ -1132,4 +1142,112 @@ upstream:
 	last_id = msg->id;
 	last_dir = RR_FLOW_UPSTREAM;
 	return (dir==RR_FLOW_UPSTREAM)?0:-1;
+}
+
+/*!
+ * \brief Gets the URI of the remote destination, based on the route-set.
+ *
+ * \param msg - request that will have the Route header parameter searched
+ * \return A str with the URI of the remote target.
+ */
+str* get_remoteuri(struct sip_msg *msg) {
+	int res;
+	struct hdr_field *hdr;
+	rr_t *rt,*prev;
+	str *uri;
+
+	if (msg == NULL) {
+		LM_ERR("No SIP-Message, internal error?!?!\n");
+		return NULL;
+	}
+	/* If we are a loose-router,
+	   we find the Remote URI in the Request URI. */
+	if ((rr_type == RR_TYPE_LOOSE_LOOSE)
+	  || (rr_type == RR_TYPE_LOOSE_STRICT)) {
+		return &msg->first_line.u.request.uri;
+	} else if (rr_type == RR_TYPE_STRICT_LOOSE) {
+		/* We are a strict router, so the loose_route() sets the
+                   new URI from the previous strict routing. */
+		return &msg->new_uri;
+	} else if (rr_type == RR_TYPE_STRICT_STRICT) {
+		res = find_rem_target(msg, &hdr, &rt, &prev);
+		if (res < 0) {
+			/* Failed to find the last route-target */
+			LM_ERR("Failed to find the last route-target\n");
+			return NULL;
+		} else if (res > 0) {
+			/* No remote target found */
+			LM_ERR("No remote target found!\n");
+			return NULL;
+		}
+		uri = &rt->nameaddr.uri;
+		if(get_maddr_uri(uri, 0)!=0) {
+			LM_ERR("failed to check maddr\n");
+			return 0;
+		}
+		return uri;
+	} else {
+		LM_ERR("Unknown / invalid routing type %d\n", rr_type);
+		return 0;
+	}
+}
+
+/*!
+ * \brief Returns a list of the URI's from the route-headers
+ *
+ * \param msg - request that will have the Route header parameter searched
+ * \return An array of str with the URI of the next hops.
+ */
+#define MAX_HDRS 32
+str* get_routeset(struct sip_msg *msg,int *nr_routes) {
+	/* The destination, where the URI's are stored */
+	static str uris[MAX_HDRS];
+	/* Iterator for all record-route headers */
+	struct hdr_field *hdr;
+	/* The parsed route-header structure */
+	rr_t * rr;
+
+	if (msg == NULL || msg->route == NULL) {
+		LM_ERR("No SIP-Message or no route-headers!\n");
+		return NULL;
+	}
+
+	if (!nr_routes) {
+		LM_ERR("nr_routes parameter is invalid!\n");
+		return NULL;
+	}
+	*nr_routes = 0;
+
+	if ((rr_type == RR_TYPE_STRICT_STRICT) 
+          || (rr_type == RR_TYPE_LOOSE_STRICT)) {
+		/* must manually insert RURI, as it was part
+		 * of the route deleted to make up for strict routing */
+		uris[(*nr_routes)++] = msg->new_uri;
+	}
+
+	hdr = msg->route;
+	while (hdr != NULL) {
+		if (parse_rr(hdr) < 0) {
+			LM_ERR("Invalid Route-Header, failed to parse\n");
+			return NULL;
+		}
+		/* Get the parsed content of the route-header */
+		rr = (rr_t*)hdr->parsed;
+		while (rr) {
+			uris[(*nr_routes)++] = rr->nameaddr.uri;
+			if(*nr_routes==MAX_HDRS)	{
+				LM_ERR("Too many route-headers!!!\n");
+				return 0;
+			}
+			rr = rr->next;
+		}
+		hdr = hdr->next;
+	}
+
+
+	/* if SS - remove last route */
+	if (rr_type == RR_TYPE_STRICT_STRICT)
+		(*nr_routes)--;
+
+	return uris;
 }

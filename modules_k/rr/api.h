@@ -46,12 +46,19 @@
 #include "loose.h"
 #include "rr_cb.h"
 
+#define RR_TYPE_STRICT_LOOSE  (1<<1)
+#define RR_TYPE_STRICT_STRICT (1<<2)
+#define RR_TYPE_LOOSE_LOOSE   (1<<3)
+#define RR_TYPE_LOOSE_STRICT  (1<<4)
+
 typedef  int (*add_rr_param_t)(struct sip_msg*, str*);
 typedef  int (*check_route_param_t)(struct sip_msg*, regex_t*);
 typedef  int (*is_direction_t)(struct sip_msg*, int);
 typedef  int (*get_route_param_t)(struct sip_msg*, str*, str*);
 typedef  int (*record_route_f)(struct sip_msg*, str*);
 typedef  int (*loose_route_f)(struct sip_msg*);
+typedef  str* (*get_remoteuri_t)(struct sip_msg*);
+typedef  str* (*get_routeset_t)(struct sip_msg*, int *nr_routes);
 
 /*! record-route API export binding */
 typedef struct rr_binds {
@@ -63,6 +70,9 @@ typedef struct rr_binds {
 	get_route_param_t    get_route_param;
 	register_rrcb_t      register_rrcb;
 	int                  append_fromtag;
+	get_remoteuri_t     get_remoteuri;
+	get_routeset_t       get_routeset;
+	int                  rr_type;
 } rr_api_t;
 
 typedef  int (*load_rr_f)( struct rr_binds* );

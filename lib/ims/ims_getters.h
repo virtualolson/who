@@ -410,5 +410,21 @@ int cscf_add_header_rpl(struct sip_msg *msg, str *hdr);
  */
 int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr);
 
+/**
+ * Returns the first header structure for a given header name.
+ * @param msg - the SIP message to look into
+ * @param header_name - the name of the header to search for
+ * @returns the hdr_field on success or NULL if not found
+ */
+struct hdr_field* cscf_get_header(struct sip_msg * msg, str header_name);
+
+/**
+ * Retrieves the P-Charging-Vector header information
+ * P-Charging-Vector:
+ * @param msg - the SIP message to retrieve from
+ * @returns #CSCF_RETURN_TRUE if ok or #CSCF_RETURN_FALSE on error
+ */
+int cscf_get_p_charging_vector(struct sip_msg *msg, str * icid, str * orig_ioi, str * term_ioi);
+
 #endif
 

@@ -358,7 +358,7 @@ struct dlg_cell *get_current_dialog(struct sip_msg *msg)
             LM_DBG("Get Current Dialog: SIP Method - %.*s", msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
 		/* use the per-process static holder */
 		if (msg->id==current_dlg_msg_id){
-                    LM_DBG("Message Id [%i] equals current dlg msg id [%i] - returning current dlg pointer", msg->id, current_dlg_msg_id);
+                    LM_DBG("Message Id [%i] equals current dlg msg id [%i] - returning current dlg pointer [%p]", msg->id, current_dlg_msg_id, current_dlg_pointer);
                     return current_dlg_pointer;
                 }
                 LM_DBG("Message Id [%i] not equal to current point dlg id [%i] - returning null", msg->id, current_dlg_msg_id);

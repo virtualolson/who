@@ -38,6 +38,9 @@ typedef int (*terminate_dlg_f)(str *callid, str *ftag, str *ttag, str *hdrs, str
 /* get_dlg_lifetime function prototype */
 typedef time_t (*get_dlg_expires_f)(str *callid, str *ftag, str *ttag);
 
+/* get_current_dlg function prototype */
+typedef struct dlg_cell* (*get_current_dlg_f)( struct sip_msg* msg);
+
 struct dlg_binds {
 	register_dlgcb_f  		register_dlgcb;
 	register_dlgcb_nodlg_f 	register_dlgcb_nodlg;
@@ -45,6 +48,7 @@ struct dlg_binds {
 	set_dlg_variable_f 		set_dlg_var;
 	get_dlg_variable_f 		get_dlg_var;
 	get_dlg_expires_f 		get_dlg_expires;
+	get_current_dlg_f		get_current_dlg;
 };
 
 

@@ -24,7 +24,9 @@
 #include "diameter_ro.h"
 #include "ims_ro.h"
 #include "Ro_data.h"
-
+#include "defines.h"
+#include "dialog.h"
+#include "ro_avp.h"
 
 //#include "../../parser/ims/ims.h"
 
@@ -36,10 +38,14 @@
 extern struct tm_binds tmb;
 extern cdp_avp_bind_t *cdp_avp;
 extern client_ro_cfg cfg;
+extern struct dlg_binds dlgb;
 
 struct dlg_binds* dlgb_p;
 
 int interim_request_credits;
+
+
+int get_direction_as_int(str* direction);
 
 /**
  * Retrieves the SIP request that generated a diameter transaction
@@ -246,7 +252,7 @@ inline int Ro_add_subscription_id(AAAMessage *msg, unsigned int type, str *subsc
 {
     AAA_AVP_LIST list;
     str group;
-    str from_sip_uri = str_init("sip:jason@ims.smilecoms.com"); //TODO fix
+//    str from_sip_uri = str_init("sip:jason@ims.smilecoms.com"); //TODO fix
     char x[4];
 
     list.head = 0;
@@ -255,7 +261,7 @@ inline int Ro_add_subscription_id(AAAMessage *msg, unsigned int type, str *subsc
     set_4bytes(x, type);
     Ro_add_avp_list(&list, x, 4, AVP_Subscription_Id_Type, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 
-    Ro_add_avp_list(&list, from_sip_uri.s, from_sip_uri.len, AVP_Subscription_Id_Data, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+    Ro_add_avp_list(&list, subscription_id->s, subscription_id->len, AVP_Subscription_Id_Data, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 
     group = cdp_avp->cdp->AAAGroupAVPS(list);
 
@@ -358,7 +364,7 @@ int get_timestamps(struct sip_msg * req, struct sip_msg * reply, time_t * req_ti
 }
 
 /*
- * creates the rf session for a session establishment
+ * creates the ro session for a session establishment
  * @param aor: the aor to be handled
  * @return: 0 - ok, -1 - error, -2 - out of memory
  */
@@ -383,18 +389,21 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
 
     if (!get_sip_header_info(req, reply, &acc_record_type, &sip_method, &event, &expires, &callid, &from_uri, &to_uri))
         goto error;
-    if (dir == 0) {
-        user_name.s = ("sip:jason@ims.smilecoms.com"); //from_uri;
-        user_name.len = strlen(user_name.s);
+    if (dir == RO_ORIG_DIRECTION) {
+        user_name.s = from_uri.s;
+        user_name.len = from_uri.len;
+    } else if (dir == RO_TERM_DIRECTION){
+        user_name.s = to_uri.s;
+        user_name.len = to_uri.len;
     } else {
-        user_name.s = ("sip:jason@ims.smilecoms.com"); //to_uri;
-        user_name.len = strlen(user_name.s);
+    	LM_ERR("don't know what to do in unknown mode - should we even get here\n");
+    	goto error;
     }
 
     /*	if(!get_ims_charging_info(req, reply, &icid, &orig_ioi, &term_ioi))
                     goto error;
      */
-    LM_ERR("retrieved ims charging info icid %.*s orig_ioi %.*s term_ioi %.*s\n", icid.len, icid.s, orig_ioi.len, orig_ioi.s, term_ioi.len, term_ioi.s);
+    LM_DBG("retrieved ims charging info icid %.*s orig_ioi %.*s term_ioi %.*s\n", icid.len, icid.s, orig_ioi.len, orig_ioi.s, term_ioi.len, term_ioi.s);
 
     if (!get_timestamps(req, reply, &req_timestamp, &reply_timestamp))
         goto error;
@@ -405,16 +414,16 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
     if (!(time_stamps = new_time_stamps(&req_timestamp, NULL, &reply_timestamp, NULL)))
         goto error;
 
-    str tmp_from = str_init("sip:jason@ims.smilecoms.com");
-    str tmp_to = str_init("sip:27832837000@ims.smilecoms.com");
-    if (!(ims_info = new_ims_information(event_type, time_stamps, &callid, &callid, &tmp_from/*&from_uri*/, &tmp_to/*&to_uri*/, &icid, &orig_ioi, &term_ioi, dir)))
+//    str tmp_from = str_init("sip:jason@ims.smilecoms.com");
+//    str tmp_to = str_init("sip:27832837000@ims.smilecoms.com");
+    if (!(ims_info = new_ims_information(event_type, time_stamps, &callid, &callid, &from_uri, &to_uri, &icid, &orig_ioi, &term_ioi, dir)))
         goto error;
     event_type = 0;
     time_stamps = 0;
 
     subscr.type = Subscription_Type_IMPU;
-    subscr.id.s = "sip:jason@ims.smilecoms.com"; //from_uri.s;
-    subscr.id.len = strlen("sip:jason@ims.smilecoms.com"); //from_uri.len;
+    subscr.id.s = from_uri.s;
+    subscr.id.len = from_uri.len;
 
     ro_ccr_data = new_Ro_CCR(acc_record_type, &user_name, ims_info, &subscr);
     if (!ro_ccr_data) {
@@ -425,7 +434,7 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
 
     if (strncmp(req->first_line.u.request.method.s, "INVITE", 6) == 0) {
         auth = cdp_avp->cdp->AAACreateClientAuthSession(1, NULL, (void *) ro_ccr_data);
-        LM_INFO("INFO:"M_NAME":dlg_create_ro_session: created Ro Session with id [%*.s]\n", auth->id.len, auth->id.s);
+        LM_INFO("created Ro Session with id [%.*s]\n", auth->id.len, auth->id.s);
         //save_session = auth->id;
 
     }
@@ -435,7 +444,7 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
 
 
     if (!auth) {
-        LM_ERR("INFO:"M_NAME":dlg_create_ro_session: unable to create the Ro Session\n");
+        LM_ERR("unable to create the Ro Session\n");
         goto error;
     }
 
@@ -443,17 +452,16 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
     return ro_ccr_data;
 
 out_of_memory:
-    error :
-            time_stamps_free(time_stamps);
+error :
+	time_stamps_free(time_stamps);
     event_type_free(event_type);
     ims_information_free(ims_info);
     Ro_free_CCR(ro_ccr_data);
+
     return NULL;
 }
 
 int sip_create_ro_ccr_data(struct sip_msg * msg, int dir, Ro_CCR_t ** ro_ccr_data, AAASession ** auth) {
-
-    LM_DBG("creating ro data and message is %i\n", msg->first_line.type);
 
     if (msg->first_line.type == SIP_REQUEST) {
         /*end of session*/
@@ -770,155 +778,153 @@ error_no_cca:
  * @param str2 - not used
  * @returns #CSCF_RETURN_TRUE if OK, #CSCF_RETURN_ERROR on error
  */
-//int Ro_Send_CCR(struct sip_msg *msg, char *reserve_time) {
-//
-//    int reserve_secs = 0;
-//    AAASession * auth = 0;
-//    Ro_CCR_t * ro_ccr_data = 0;
-//    AAAMessage * acr = 0;
-//    int dir = 0;
-//    Ro_CCA_t *ro_cca_data = 0;
-//    struct ro_session *new_session = 0;
+int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit_type, int reservation_units) {
+	str session_id = { 0, 0 };
+    AAASession * auth = 0;
+    Ro_CCR_t * ro_ccr_data = 0;
+    AAAMessage * acr = 0;
+    int dir = 0;
+    Ro_CCA_t *ro_cca_data = 0;
+    struct ro_session *new_session = 0;
 //    struct ro_session_entry *ro_session_entry = 0;
-//
-//    struct dlg_cell* dlg = 0;
-//    unsigned int _dir = 0;
-//    unsigned int _del = 0;
-//
-//
-//    /* lets see if a session has actually been created for us */
-//
-//    dlg = dlgb_p->get_dlg(&msg->callid->body, &get_from(msg)->tag_value, &get_to(msg)->tag_value, &_dir, &_del);
-//    if (dlg != 0) {
-//        /* now lets get our session object */
-//        new_session = lookup_ro_session(dlg->h_entry, &msg->callid->body, 0);
-//        dlgb_p->unref_dlg(dlg, 1);
-//
-//        if (!new_session) {
-//            //no point in continuing
-//            goto error;
-//        }
-//
-//        /* lock the session */
-//        ro_session_entry = &(ro_session_table->entries[new_session->h_entry]);
-//        ro_session_lock(ro_session_table, ro_session_entry);
-//    } else {
-//        //no point continuing
-//        goto error;
-//    }
-//
-//    if (get_int_fparam(&reserve_secs, msg, (fparam_t*) reserve_time) < 0) {
-//        LM_ERR("invalid requested time value\n");
-//        goto error;
-//    }
-//
-//    int cc_event_number = 1;
-//    int cc_event_type = RO_CC_START;
-//    if (strncmp(msg->first_line.u.request.method.s, "INVITE", 6) != 0) {
-//        goto error; //function should only be called with an INVITE message
-//    }
-//    LM_DBG("Initial invite has requested %i seconds.\n", reserve_secs);
-//
-//    if (!sip_create_ro_ccr_data(msg, dir, &ro_ccr_data, &auth))
-//        goto error;
-//
-//    if (!ro_ccr_data)
-//        goto error;
-//
-//    if (!auth) goto error;
-//
-//    if (!(acr = Ro_new_ccr(auth, ro_ccr_data)))
-//        goto error;
-//
-//    if (!Ro_add_vendor_specific_appid(acr, IMS_vendor_id_3GPP, IMS_Ro, 0 /*IMS_Ro*/)) {
-//        LM_ERR("Problem adding Vendor specific ID\n");
-//    }
-//    if (!Ro_add_cc_request(acr, cc_event_type, cc_event_number)) {
-//        LM_ERR("Problem adding CC-Request data\n");
-//    }
-//    if (!Ro_add_event_timestamp(acr, time(NULL))) {
-//        LM_ERR("Problem adding Event-Timestamp data\n");
-//    }
-//    str mac; //TODO - this is terrible
-//    mac.s = "00:00:00:00:00:00";
-//    mac.len = strlen(mac.s);
-//
-//    if (!Ro_add_user_equipment_info(acr, AVP_EPC_User_Equipment_Info_Type_MAC, mac)) {
-//        LM_ERR("Problem adding User-Equipment data\n");
-//    }
-//
-//    //get sip from URI for request
-//    str from_sip_uri;
-//
-//    if (!cscf_get_from_uri(msg, &from_sip_uri)) {//TODO fix
-//        return 0;
-//    }
-//    if (!Ro_add_subscription_id(acr, AVP_EPC_Subscription_Id_Type_End_User_SIP_URI, &from_sip_uri)) {
-//        LM_ERR("Problem adding Subscription ID data\n");
-//    }
-//    if (!Ro_add_multiple_service_credit_Control(acr, reserve_secs, -1)) {
-//        LM_ERR("Problem adding Multiple Service Credit Control data\n");
-//    }
-//
-//    /* before we send, update our session object with auth and session id */
-//    new_session->auth_appid = auth->application_id;
-//    new_session->auth_session_type = auth->type;
-//    new_session->ro_session_id.s = (char*) shm_malloc(auth->id.len);
-//    new_session->ro_session_id.len = auth->id.len;
-//    memcpy(new_session->ro_session_id.s, auth->id.s, auth->id.len);
-//
-//    LM_DBG("Sending CCR Diameter message.\n");
-//    /* send sunchronously so we can respond to callplan (cfg file), so a decision can be made to process the invite */
-//    cdp_avp->cdp->AAASessionsUnlock(auth->hash);
-//    AAAMessage *cca = cdp_avp->cdp->AAASendRecvMessageToPeer(acr, &cfg.destination_host);
-//
-//    if (cca == NULL) {
-//        LM_ERR("Error reserving credit for CCA.\n");
-//        goto error;
-//    }
-//    ro_cca_data = Ro_parse_CCA_avps(cca);
-//
-//    if (ro_cca_data == NULL) {
-//        LM_ERR("Could not parse CCA message response.\n");
-//        goto error;
-//    }
-//    if (ro_cca_data->resultcode != 2001) {
-//        LM_ERR("Got bad CCA result code - reservation failed");
-//        goto error;
-//    }
-//
-//    LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i].\n", ro_cca_data->mscc->granted_service_unit->cc_time, ro_cca_data->mscc->validity_time);
-//
-//    new_session->last_event_timestamp = time(0);
-//    new_session->event_type = pending;
-//    new_session->reserved_secs = ro_cca_data->mscc->granted_service_unit->cc_time;
-//    new_session->valid_for = ro_cca_data->mscc->validity_time;
-//
-//    Ro_free_CCR(ro_ccr_data);
-//    Ro_free_CCA(ro_cca_data);
-//
-//
+
+    int cc_event_number = 0;						//According to IOT tests this should start at 0
+    int cc_event_type = RO_CC_START;
+
+    dir = get_direction_as_int(direction);
+
+    struct dlg_cell* dlg = dlgb.get_current_dlg(msg);
+	if (!dlg) {
+		//unable to get dialog, return error;
+		LM_DBG("Unable to find dialog and cannot do Ro charging without it\n");
+		return -1;
+	}
+
+    //create a session object without auth and diameter session id - we will add this later.
+	new_session = build_new_ro_session(dir, 0, 0, &session_id, &dlg->callid,
+			&dlg->from_uri, &dlg->req_uri, dlg->h_entry, dlg->h_id,
+			reservation_units, 0);
+	if (!new_session) {
+		LM_ERR("Couldn't create new Ro Session - this is BAD!\n");
+		return -1;
+	}
+
+	if (dlgb.register_dlgcb(dlg, DLGCB_RESPONSE_FWDED, dlg_reply, new_session,NULL ) != 0)
+		LOG(L_ERR, "cannot register callback for dialog confirmation\n");
+	if (dlgb.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED | DLGCB_DESTROY, dlg_terminated, new_session, NULL ) != 0)
+		LOG(L_ERR, "cannot register callback for dialog termination\n");
+
+    if (!sip_create_ro_ccr_data(msg, dir, &ro_ccr_data, &auth))
+        goto error;
+
+    if (!ro_ccr_data)
+        goto error;
+
+    if (!auth) goto error;
+
+    if (!(acr = Ro_new_ccr(auth, ro_ccr_data)))
+        goto error;
+
+    if (!ro_add_destination_realm_avp(acr, cfg.destination_realm)) {
+    	LM_ERR("Problem adding Destination Realm\n");
+    	goto error;
+    }
+    if (!Ro_add_vendor_specific_appid(acr, IMS_vendor_id_3GPP, IMS_Ro, 0 /*IMS_Ro*/)) {
+        LM_ERR("Problem adding Vendor specific ID\n");
+        goto error;
+    }
+    if (!Ro_add_cc_request(acr, cc_event_type, cc_event_number)) {
+        LM_ERR("Problem adding CC-Request data\n");
+        goto error;
+    }
+    if (!Ro_add_event_timestamp(acr, time(NULL))) {
+        LM_ERR("Problem adding Event-Timestamp data\n");
+        goto error;
+    }
+    str mac; //TODO - this is terrible
+    mac.s = "00:00:00:00:00:00";
+    mac.len = strlen(mac.s);
+
+    if (!Ro_add_user_equipment_info(acr, AVP_EPC_User_Equipment_Info_Type_MAC, mac)) {
+        LM_ERR("Problem adding User-Equipment data\n");
+        goto error;
+    }
+
+    //get sip from URI for request
+    str from_sip_uri;
+
+    if (!cscf_get_from_uri(msg, &from_sip_uri)) {//TODO fix
+        return 0;
+    }
+    if (!Ro_add_subscription_id(acr, AVP_EPC_Subscription_Id_Type_End_User_SIP_URI, &from_sip_uri)) {
+        LM_ERR("Problem adding Subscription ID data\n");
+        goto error;
+    }
+    if (!Ro_add_multiple_service_credit_Control(acr, reservation_units, -1)) {
+        LM_ERR("Problem adding Multiple Service Credit Control data\n");
+        goto error;
+    }
+
+    /* before we send, update our session object with auth and session id */
+    new_session->auth_appid = auth->application_id;
+    new_session->auth_session_type = auth->type;
+    new_session->ro_session_id.s = (char*) shm_malloc(auth->id.len);
+    new_session->ro_session_id.len = auth->id.len;
+    memcpy(new_session->ro_session_id.s, auth->id.s, auth->id.len);
+
+    LM_DBG("Sending CCR Diameter message.\n");
+    /* send sunchronously so we can respond to callplan (cfg file), so a decision can be made to process the invite */
+    cdp_avp->cdp->AAASessionsUnlock(auth->hash);
+    AAAMessage *cca = cdp_avp->cdp->AAASendRecvMessageToPeer(acr, &cfg.destination_host);
+
+    if (cca == NULL) {
+        LM_ERR("Error reserving credit for CCA.\n");
+        goto error;
+    }
+    ro_cca_data = Ro_parse_CCA_avps(cca);
+
+    if (ro_cca_data == NULL) {
+        LM_ERR("Could not parse CCA message response.\n");
+        goto error;
+    }
+    if (ro_cca_data->resultcode != 2001) {
+        LM_ERR("Got bad CCA result code - reservation failed");
+        goto error;
+    }
+
+    LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i].\n", ro_cca_data->mscc->granted_service_unit->cc_time, ro_cca_data->mscc->validity_time);
+
+    new_session->last_event_timestamp = time(0);
+    new_session->event_type = pending;
+    new_session->reserved_secs = ro_cca_data->mscc->granted_service_unit->cc_time;
+    new_session->valid_for = ro_cca_data->mscc->validity_time;
+
+    Ro_free_CCR(ro_ccr_data);
+    Ro_free_CCA(ro_cca_data);
+
 //    ro_session_unlock(ro_session_table, ro_session_entry);
-//    unref_ro_session(new_session, 1);
-//
-//    cdp_avp->cdp->AAASessionsUnlock(auth->hash);
-//    return CSCF_RETURN_TRUE;
-//error:
-//    LM_ERR("Ro_Send_CCR: Error sending request\n");
-//    if (new_session) {
+    link_ro_session(new_session, 1);		//create extra ref for the fact that dialog has a handle in the callbacks
+    unref_ro_session(new_session, 1);
+
+
+    cdp_avp->cdp->AAASessionsUnlock(auth->hash);
+    return 0;
+error:
+    LM_ERR("Ro_Send_CCR: Error sending request\n");
+    if (new_session) {
 //        ro_session_unlock(ro_session_table, ro_session_entry);
-//        unref_ro_session(new_session, 1);
-//    }
-//
-//    Ro_free_CCR(ro_ccr_data);
-//    Ro_free_CCA(ro_cca_data);
-//    if (auth) {
-//        cdp_avp->cdp->AAASessionsUnlock(auth->hash);
-//        cdp_avp->cdp->AAADropSession(auth);
-//    }
-//    LM_DBG("Trying to reserve credit on initial INVITE failed.\n");
-//    return CSCF_RETURN_ERROR;
-//}
+        unref_ro_session(new_session, 1);
+    }
+
+    Ro_free_CCR(ro_ccr_data);
+    Ro_free_CCA(ro_cca_data);
+    if (auth) {
+        cdp_avp->cdp->AAASessionsUnlock(auth->hash);
+        cdp_avp->cdp->AAADropSession(auth);
+    }
+    LM_DBG("Trying to reserve credit on initial INVITE failed.\n");
+    return -1;
+}
 
 void remove_aaa_session(str *session_id) {
     AAASession *session;
@@ -928,4 +934,18 @@ void remove_aaa_session(str *session_id) {
         cdp_avp->cdp->AAASessionsUnlock(session->hash);
         cdp_avp->cdp->AAADropSession(session);
     }
+}
+
+
+int get_direction_as_int(str* direction) {
+	char* p = direction->s;
+
+	if (direction->len > 0 && p) {
+		if (p[0]=='O' || p[0]=='o'){
+			return RO_ORIG_DIRECTION;
+		} else if (p[0]=='T' || p[0]=='t') {
+			return RO_TERM_DIRECTION;
+		}
+	}
+	return RO_UNKNOWN_DIRECTION;
 }

@@ -16,6 +16,7 @@
 #include "ro_session_hash.h"
 #include "ims_ro.h"
 #include "config.h"
+#include "dialog.h"
 
 MODULE_VERSION
 
@@ -32,7 +33,7 @@ char* ro_service_context_id_mnc_s = "01";
 char* ro_service_context_id_mcc_s = "001";
 char* ro_service_context_id_release_s = "8";
 static int ro_session_hash_size = 4096;
-static int ro_timer_buffer = 5;
+int ro_timer_buffer = 5;
 extern int interim_request_credits;
 int interim_request_credits = 30;
 client_ro_cfg cfg;
@@ -56,11 +57,15 @@ int cdp_event_latency_loglevel = 0; /*log-level to use to report slow processing
 static int mod_init(void);
 static int mod_child_init(int);
 static void mod_destroy(void);
-static int w_ro_ccr(struct sip_msg *msg, char* direction, char* charge_type);
+static int w_ro_ccr(struct sip_msg *msg, str* direction, str* charge_type, str* unit_type, int reservation_units);
 void ro_session_ontimeout(struct ro_tl *tl);
 
-static cmd_export_t cmds[] = { { "Ro_CCR", (cmd_function) w_ro_ccr, 2, 0, 0,
-		REQUEST_ROUTE | ONREPLY_ROUTE }, { 0, 0, 0, 0, 0, 0 } };
+static int ro_fixup(void **param, int param_no);
+
+static cmd_export_t cmds[] = {
+		{ "Ro_CCR", 	(cmd_function) w_ro_ccr, 4, ro_fixup, 0, REQUEST_ROUTE },
+		{ 0, 0, 0, 0, 0, 0 }
+};
 
 static param_export_t params[] = {
 		{ "hash_size", 				INT_PARAM,			&ro_session_hash_size },
@@ -90,15 +95,16 @@ stat_export_t mod_stats[] = {
 
 /** module exports */
 struct module_exports exports = { "ims_ro", DEFAULT_DLFLAGS, /* dlopen flags */
-cmds, /* Exported functions */
-params, /* Exported params */
-0, /* exported statistics */
-0, /* exported MI functions */
-0, /* exported pseudo-variables */
-0, /* extra processes */
-mod_init, /* module initialization function */
-0, mod_destroy, /* module destroy functoin */
-mod_child_init /* per-child init function */
+		cmds, 		/* Exported functions */
+		params, 	/* Exported params */
+		0, 			/* exported statistics */
+		0, 			/* exported MI functions */
+		0, 			/* exported pseudo-variables */
+		0, 			/* extra processes */
+		mod_init, 	/* module initialization function */
+		0,
+		mod_destroy, 	/* module destroy functoin */
+		mod_child_init 	/* per-child init function */
 };
 
 int fix_parameters() {
@@ -146,6 +152,11 @@ static int mod_init(void) {
 	int n;
 	load_dlg_f load_dlg;
 	load_tm_f load_tm;
+
+	if (!fix_parameters()) {
+		LM_ERR("unable to set Ro configuration parameters correctly\n");
+		goto error;
+	}
 
 	/* bind to the tm module */
 	if (!(load_tm = (load_tm_f) find_export("load_tm", NO_SCRIPT, 0))) {
@@ -199,6 +210,19 @@ static int mod_init(void) {
 		return -1;
 	}
 
+	/* register global timer */
+	if (register_timer(ro_timer_routine, 0/*(void*)ro_session_list*/, 1) < 0) {
+		LM_ERR("failed to register timer \n");
+		return -1;
+	}
+
+	/* init timer lists*/
+	if (init_ro_timer(ro_session_ontimeout) != 0) {
+		LM_ERR("cannot init timer list\n");
+		return -1;
+	}
+
+
 	/* bind to dialog module */
 	if (!(load_dlg = (load_dlg_f) find_export("load_dlg", 0, 0))) {
 		LM_ERR("mod_init: can not import load_dlg. This module requires Kamailio dialog moduile.\n");
@@ -207,13 +231,6 @@ static int mod_init(void) {
 	if (load_dlg(&dlgb) == -1) {
 		goto error;
 	}
-
-	// register dialog creation callback
-//	if (dlgb.register_dlgcb(NULL, DLGCB_CREATED, dlg_created, NULL, NULL )
-//			!= 0) {
-//		LOG(L_CRIT, "cannot register callback for dialog creation\n");
-//		return -1;
-//	}
 
 	return 0;
 
@@ -232,82 +249,7 @@ static void mod_destroy(void) {
 
 }
 
-static void dlg_reply(struct dlg_cell *dlg, int type,
-		struct dlg_cb_params *_params) {
-	struct sip_msg *reply = _params->rpl;
-	struct ro_session* session = 0;
-	struct ro_session_entry* ro_session_entry;
-	time_t now = time(0);
-	time_t time_since_last_event;
-
-	if (reply != FAKED_REPLY && reply->REPLY_STATUS == 200) {
-		LM_DBG("Call answered - search for Ro Session and initialise timers.\n");
-
-		/* find the session for this call*/
-		if ((session = lookup_ro_session(dlg->h_entry, &dlg->callid, 0))) {
-
-			ro_session_entry = &(ro_session_table->entries[session->h_entry]);
-			ro_session_lock(ro_session_table, ro_session_entry);
-
-			time_since_last_event = now - session->last_event_timestamp;
-			session->start_time = session->last_event_timestamp = now;
-			session->event_type = answered;
-
-			ro_session_unlock(ro_session_table, ro_session_entry);
-
-			/* check to make sure that the validity of the credit is enough for the bundle */
-			if (session->reserved_secs
-					< (session->valid_for - time_since_last_event)) {
-				if (session->reserved_secs > ro_timer_buffer/*TIMEOUTBUFFER*/)
-					insert_ro_timer(&session->ro_tl,
-							session->reserved_secs - ro_timer_buffer); //subtract 5 seconds so as to get more credit before we run out
-				else
-					insert_ro_timer(&session->ro_tl, session->reserved_secs);
-
-			} else {
-				if (session->valid_for > ro_timer_buffer)
-					insert_ro_timer(&session->ro_tl,
-							session->valid_for - ro_timer_buffer); //subtract 5 seconds so as to get more credit before we run out
-
-				else
-					insert_ro_timer(&session->ro_tl, session->valid_for);
-			}
-			unref_ro_session(session, 1);
-		}
-	}
-}
-
-static void dlg_terminated(struct dlg_cell *dlg, int type,
-		struct dlg_cb_params *_params) {
-
-	struct ro_session *ro_session = 0;
-	struct ro_session_entry *ro_session_entry;
-
-	if (!_params) {
-		return;
-	}
-
-	struct sip_msg *request = _params->req;
-	if (!request) {
-		LM_WARN("dlg_terminated has no SIP request associated.\n");
-	}
-
-	if (dlg && (dlg->callid.s && dlg->callid.len > 0)) {
-		/* find the session for this call*/
-		if ((ro_session = lookup_ro_session(dlg->h_entry, &dlg->callid, 0))) {
-			ro_session_entry =
-					&(ro_session_table->entries[ro_session->h_entry]);
-			ro_session_lock(ro_session_table, ro_session_entry);
-			if (ro_session->event_type != pending) {
-				send_ccr_stop(ro_session);
-			}
-			ro_session_unlock(ro_session_table, ro_session_entry);
-			unref_ro_session(ro_session, 2);
-		}
-	}
-}
-
-static int w_ro_ccr(struct sip_msg *msg, char* direction, char* charge_type) {
+static int w_ro_ccr(struct sip_msg *msg, str* direction, str* charge_type, str* unit_type, int reservation_units) {
 	/* PSEUDOCODE/NOTES
 	 * 1. What mode are we in - terminating or originating
 	 * 2. check request type - 	IEC - Immediate Event Charging
@@ -321,41 +263,24 @@ static int w_ro_ccr(struct sip_msg *msg, char* direction, char* charge_type) {
 	 *
 	 *
 	 */
-	str session_id = { 0, 0 };
-	struct ro_session *ro_session = 0;
-
-	LM_DBG("direction is %s and charge_type is %s\n", direction, charge_type);
-	struct dlg_cell* dlg = dlgb.get_current_dlg(msg);
-	if (!dlg) {
-		//unable to get dialog, return error;
-		LM_DBG("Unable to find dialog and cannot do Ro charging without it\n");
-		return RO_RETURN_FALSE;
-	}
-
-	LM_DBG("Found current DLG, continuing\n");
-	LM_DBG("ro_client: new dlg created with id [%i:%i].\n", dlg->h_entry, dlg->h_id);
+	LM_DBG("Ro CCR initiated: direction:%.*s, charge_type:%.*s, unit_type:%.*s, reservation_units:%i",
+			direction->len, direction->s,
+			charge_type->len, charge_type->s,
+			unit_type->len, unit_type->s,
+			reservation_units);
 
 	if (msg->REQ_METHOD != METHOD_INVITE)
 		return RO_RETURN_FALSE;
 
-	//create a session object without auth and diameter session id - we will add this later.
-	ro_session = build_new_ro_session(0, 0, &session_id, &dlg->callid,
-			&dlg->from_uri, &dlg->req_uri, dlg->h_entry, dlg->h_id, 0, 0);
-	if (!ro_session) {
-		LM_ERR("Couldn't create new Ro Session - this is BAD!\n");
+	int ret = Ro_Send_CCR(msg, direction, charge_type, unit_type, reservation_units);
+
+	if (ret != 0) {
+		LM_DBG("RO_CCR failed\n");
 		return RO_RETURN_FALSE;
+	} else {
+		LM_DBG("RO_CCR_success\n");
+		return RO_RETURN_TRUE;
 	}
-	link_ro_session(ro_session, 0);
-
-	if (dlgb.register_dlgcb(dlg, DLGCB_RESPONSE_FWDED, dlg_reply, NULL, NULL )
-			!= 0)
-		LOG(L_ERR, "cannot register callback for dialog confirmation\n");
-	if (dlgb.register_dlgcb(dlg,
-			DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED | DLGCB_DESTROY,
-			dlg_terminated, NULL, NULL ) != 0)
-		LOG(L_ERR, "cannot register callback for dialog termination\n");
-
-	return RO_RETURN_TRUE;
 }
 
 /* this is the functino called when a we need to request more funds/credit. We need to try ansd reserve more credit. If we cant we need to put a new timer to kill
@@ -490,4 +415,25 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 	ro_session_unlock(ro_session_table, ro_session_entry);
 
 	return;
+}
+
+static int ro_fixup(void **param, int param_no) {
+	str s;
+	unsigned int num;
+
+	if (param_no > 0 && param_no <= 3) {
+		return fixup_var_str_12(param, param_no);
+	} else if (param_no == 4) {
+		/*convert to int */
+		s.s = (char*)*param;
+		s.len = strlen(s.s);
+		if (str2int(&s, &num)==0) {
+			pkg_free(*param);
+			*param = (void*)(unsigned long)num;
+			return 0;
+		}
+		LM_ERR("Bad reservation units: <%s>n", (char*)(*param));
+		return E_CFG;
+	}
+	return 0;
 }

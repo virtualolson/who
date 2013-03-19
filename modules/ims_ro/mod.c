@@ -244,7 +244,6 @@ static int mod_init(void) {
 }
 
 static int mod_child_init(int rank) {
-	LM_DBG("Initialization of module in child [%d] \n", rank);
 	return 0;
 }
 

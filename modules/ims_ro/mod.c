@@ -68,30 +68,34 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-		{ "hash_size", 				INT_PARAM,			&ro_session_hash_size },
-		{ "interim_update_credits",	INT_PARAM,			&interim_request_credits },
-		{ "timer_buffer", 			INT_PARAM,			&ro_timer_buffer },
-		{ "ro_forced_peer", 		STR_PARAM, 			&ro_forced_peer.s },
-		{ "ro_auth_expiry",			INT_PARAM, 			&ro_auth_expiry },
-		{ "cdp_event_latency", 		INT_PARAM,			&cdp_event_latency }, /*flag: report slow processing of CDP callback events or not */
-		{ "cdp_event_threshold", 	INT_PARAM, 			&cdp_event_threshold }, /*time in ms above which we should report slow processing of CDP callback event*/
-		{ "cdp_event_latency_log", 	INT_PARAM, 			&cdp_event_latency_loglevel },/*log-level to use to report slow processing of CDP callback event*/
-		{ "origin_host", 			STR_PARAM, 			&ro_origin_host_s },
-		{ "origin_realm", 			STR_PARAM,			&ro_origin_realm_s },
-		{ "destination_realm", 		STR_PARAM,			&ro_destination_realm_s },
-		{ "destination_host", 		STR_PARAM,			&ro_destination_host_s },
-		{ "service_context_id_root",STR_PARAM,			&ro_service_context_id_root_s },
-		{ "service_context_id_ext", STR_PARAM,			&ro_service_context_id_ext_s },
-		{ "service_context_id_mnc", STR_PARAM,			&ro_service_context_id_mnc_s },
-		{ "service_context_id_mcc", STR_PARAM,			&ro_service_context_id_mcc_s },
-		{ "service_context_id_release",	STR_PARAM, 		&ro_service_context_id_release_s },
+		{ "hash_size", 				INT_PARAM,			&ro_session_hash_size 		},
+		{ "interim_update_credits",	INT_PARAM,			&interim_request_credits 	},
+		{ "timer_buffer", 			INT_PARAM,			&ro_timer_buffer 			},
+		{ "ro_forced_peer", 		STR_PARAM, 			&ro_forced_peer.s 			},
+		{ "ro_auth_expiry",			INT_PARAM, 			&ro_auth_expiry 			},
+		{ "cdp_event_latency", 		INT_PARAM,			&cdp_event_latency 			}, /*flag: report slow processing of CDP
+																						callback events or not */
+		{ "cdp_event_threshold", 	INT_PARAM, 			&cdp_event_threshold 		}, /*time in ms above which we should
+																						report slow processing of CDP callback event*/
+		{ "cdp_event_latency_log", 	INT_PARAM, 			&cdp_event_latency_loglevel },/*log-level to use to report
+																						slow processing of CDP callback event*/
+		{ "origin_host", 			STR_PARAM, 			&ro_origin_host_s 			},
+		{ "origin_realm", 			STR_PARAM,			&ro_origin_realm_s 			},
+		{ "destination_realm", 		STR_PARAM,			&ro_destination_realm_s 	},
+		{ "destination_host", 		STR_PARAM,			&ro_destination_host_s 		},
+		{ "service_context_id_root",STR_PARAM,			&ro_service_context_id_root_s 	},
+		{ "service_context_id_ext", STR_PARAM,			&ro_service_context_id_ext_s 	},
+		{ "service_context_id_mnc", STR_PARAM,			&ro_service_context_id_mnc_s 	},
+		{ "service_context_id_mcc", STR_PARAM,			&ro_service_context_id_mcc_s 	},
+		{ "service_context_id_release",	STR_PARAM, 		&ro_service_context_id_release_s},
 		{ 0, 0, 0 }
 };
 
 stat_export_t mod_stats[] = {
-/*{"ccr_avg_response_time" ,  STAT_IS_FUNC, 	(stat_var**)get_avg_ccr_response_time	},*/
-/*{"ccr_timeouts" ,  			0, 				(stat_var**)&stat_ccr_timeouts  		},*/
-{ 0, 0, 0 } };
+		/*{"ccr_avg_response_time" ,  STAT_IS_FUNC, 	(stat_var**)get_avg_ccr_response_time	},*/
+		/*{"ccr_timeouts" ,  			0, 				(stat_var**)&stat_ccr_timeouts  		},*/
+		{ 0, 0, 0 }
+};
 
 /** module exports */
 struct module_exports exports = { "ims_ro", DEFAULT_DLFLAGS, /* dlopen flags */

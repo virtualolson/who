@@ -365,8 +365,7 @@ int get_timestamps(struct sip_msg * req, struct sip_msg * reply, time_t * req_ti
 
 /*
  * creates the ro session for a session establishment
- * @param aor: the aor to be handled
- * @return: 0 - ok, -1 - error, -2 - out of memory
+ *
  */
 
 Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, AAASession ** authp, int dir) {
@@ -414,8 +413,6 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
     if (!(time_stamps = new_time_stamps(&req_timestamp, NULL, &reply_timestamp, NULL)))
         goto error;
 
-//    str tmp_from = str_init("sip:jason@ims.smilecoms.com");
-//    str tmp_to = str_init("sip:27832837000@ims.smilecoms.com");
     if (!(ims_info = new_ims_information(event_type, time_stamps, &callid, &callid, &from_uri, &to_uri, &icid, &orig_ioi, &term_ioi, dir)))
         goto error;
     event_type = 0;
@@ -513,8 +510,9 @@ void send_ccr_interim(struct ro_session* ro_session, str* from_uri, str *to_uri,
     event_type = 0;
 
     subscr.type = Subscription_Type_IMPU;
-    subscr.id.s = "sip:jason@ims.smilecoms.com"; //from_uri.s;  /*TODO: hardwired for testing*/
-    subscr.id.len = strlen("sip:jason@ims.smilecoms.com"); //from_uri.len;
+    //TODO: need to check which direction. for ORIG we use from_uri. for TERM we use to_uri
+    subscr.id.s = from_uri.s;
+    subscr.id.len = from_uri.len;
 
     acc_record_type = AAA_ACCT_INTERIM;
 
@@ -540,7 +538,6 @@ void send_ccr_interim(struct ro_session* ro_session, str* from_uri, str *to_uri,
             goto error;
     }
 
-
     if (!(acr = Ro_new_ccr(auth, ro_ccr_data)))
         goto error;
     if (!Ro_add_vendor_specific_appid(acr, IMS_vendor_id_3GPP, IMS_Ro, 0 /*IMS_Ro*/)) {
@@ -561,9 +558,6 @@ void send_ccr_interim(struct ro_session* ro_session, str* from_uri, str *to_uri,
         LM_ERR("Problem adding User-Equipment data\n");
     }
 
-    //str sip_uri;
-    //sip_uri.s = "sip:jason@ims.smilecoms.com";
-    //sip_uri.len = strlen(sip_uri.s);
     if (!Ro_add_subscription_id(acr, AVP_EPC_Subscription_Id_Type_End_User_SIP_URI, from_uri)) {
         LM_ERR("Problem adding Subscription ID data\n");
     }
@@ -786,7 +780,6 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     int dir = 0;
     Ro_CCA_t *ro_cca_data = 0;
     struct ro_session *new_session = 0;
-//    struct ro_session_entry *ro_session_entry = 0;
 
     int cc_event_number = 0;						//According to IOT tests this should start at 0
     int cc_event_type = RO_CC_START;
@@ -902,17 +895,14 @@ int Ro_Send_CCR(struct sip_msg *msg, str* direction, str* charge_type, str* unit
     Ro_free_CCR(ro_ccr_data);
     Ro_free_CCA(ro_cca_data);
 
-//    ro_session_unlock(ro_session_table, ro_session_entry);
     link_ro_session(new_session, 1);		//create extra ref for the fact that dialog has a handle in the callbacks
     unref_ro_session(new_session, 1);
-
 
     cdp_avp->cdp->AAASessionsUnlock(auth->hash);
     return 0;
 error:
     LM_ERR("Ro_Send_CCR: Error sending request\n");
     if (new_session) {
-//        ro_session_unlock(ro_session_table, ro_session_entry);
         unref_ro_session(new_session, 1);
     }
 
@@ -935,7 +925,6 @@ void remove_aaa_session(str *session_id) {
         cdp_avp->cdp->AAADropSession(session);
     }
 }
-
 
 int get_direction_as_int(str* direction) {
 	char* p = direction->s;

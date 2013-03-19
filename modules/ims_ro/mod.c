@@ -287,7 +287,7 @@ static int w_ro_ccr(struct sip_msg *msg, str* direction, str* charge_type, str* 
 	}
 }
 
-/* this is the functino called when a we need to request more funds/credit. We need to try ansd reserve more credit. If we cant we need to put a new timer to kill
+/* this is the function called when a we need to request more funds/credit. We need to try ansd reserve more credit. If we cant we need to put a new timer to kill
  the call at the appropriate time */
 
 void ro_session_ontimeout(struct ro_tl *tl) {

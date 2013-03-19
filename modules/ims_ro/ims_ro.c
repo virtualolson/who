@@ -511,8 +511,8 @@ void send_ccr_interim(struct ro_session* ro_session, str* from_uri, str *to_uri,
 
     subscr.type = Subscription_Type_IMPU;
     //TODO: need to check which direction. for ORIG we use from_uri. for TERM we use to_uri
-    subscr.id.s = from_uri.s;
-    subscr.id.len = from_uri.len;
+    subscr.id.s = from_uri->s;
+    subscr.id.len = from_uri->len;
 
     acc_record_type = AAA_ACCT_INTERIM;
 
@@ -558,7 +558,7 @@ void send_ccr_interim(struct ro_session* ro_session, str* from_uri, str *to_uri,
         LM_ERR("Problem adding User-Equipment data\n");
     }
 
-    if (!Ro_add_subscription_id(acr, AVP_EPC_Subscription_Id_Type_End_User_SIP_URI, from_uri)) {
+    if (!Ro_add_subscription_id(acr, AVP_EPC_Subscription_Id_Type_End_User_SIP_URI, &(subscr.id))) {
         LM_ERR("Problem adding Subscription ID data\n");
     }
 

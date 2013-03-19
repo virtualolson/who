@@ -4,7 +4,7 @@
 #include "../cdp/diameter.h"
 #include "../cdp/diameter_epc.h"
 
-#ifndef WHARF
+
 /**
  * Allocate and blank a memory area
  */
@@ -147,8 +147,6 @@ do{\
 
 #define str_list_t_copy(dst,src,mem) \
 	str_dup((dst)->data,(src)->data,mem)
-
-#endif /* WHARF */
 
 typedef struct {
     str *sip_method;

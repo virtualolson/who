@@ -643,7 +643,8 @@ void send_ccr_stop(struct ro_session *ro_session) {
 
     event_type = new_event_type(&sip_method, &sip_event, 0);
 
-    LM_DBG("Sending CCR STOP request for for user [%.*s] using session id [%.*s]", ro_session->from_uri.len, ro_session->from_uri.s, ro_session->ro_session_id.len, ro_session->ro_session_id.s);
+    LM_DBG("Sending CCR STOP request for for user [%.*s] using session id [%.*s]",
+    		ro_session->from_uri.len, ro_session->from_uri.s, ro_session->ro_session_id.len, ro_session->ro_session_id.s);
 
     req_timestamp = time(0);
 
@@ -656,8 +657,7 @@ void send_ccr_stop(struct ro_session *ro_session) {
     event_type = 0;
 
     subscr.type = Subscription_Type_IMPU;
-    subscr.id.s = "sip:jason@ims.smilecoms.com"; //from_uri.s;
-    subscr.id.len = strlen("sip:jason@ims.smilecoms.com"); //from_uri.len;
+    subscr.id = ro_session->from_uri;
 
     acc_record_type = AAA_ACCT_STOP;
 
@@ -722,14 +722,15 @@ void send_ccr_stop(struct ro_session *ro_session) {
         LM_ERR("problem add Termination cause AVP to STOP record.\n");
     }
 
-    LM_DBG("Sending CCR Diameter message.\n");
+    LM_DBG("Sending CCR Diameter message for STOP record on Ro Sesison ID [%.*s] with charge units [%d]\n",
+    		ro_session->ro_session_id.len, ro_session->ro_session_id.s, used);
     /* send sunchronously so we can respond to callplan (cfg file), so a decision can be made to process the invite */
     cdp_avp->cdp->AAASessionsUnlock(auth->hash);
     AAAMessage *cca = cdp_avp->cdp->AAASendRecvMessageToPeer(acr, &cfg.destination_host);
 
     /* check response */
     if (cca == NULL) {
-        LM_ERR("Error reserving credit for CCA.\n");
+        LM_ERR("Error on CCR STOP Record\n");
         goto error_no_cca;
     }
 
@@ -740,10 +741,10 @@ void send_ccr_stop(struct ro_session *ro_session) {
         goto error;
     }
     if (ro_cca_data->resultcode != 2001) {
-        LM_ERR("Got bad CCA result code - reservation failed");
+        LM_ERR("Got bad CCA result code for STOP record");
         goto error;
     } else {
-        LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i].\n", ro_cca_data->mscc->granted_service_unit->cc_time, ro_cca_data->mscc->validity_time);
+        LM_DBG("Valid CCA response for STOP record\n");
     }
 
     Ro_free_CCR(ro_ccr_data);
@@ -754,7 +755,7 @@ out_of_memory:
     error :
             Ro_free_CCA(ro_cca_data);
 error_no_cca:
-    LM_ERR("error Ro STOP record\n");
+    LM_ERR("error on Ro STOP record\n");
     Ro_free_CCR(ro_ccr_data);
 
     if (auth) {

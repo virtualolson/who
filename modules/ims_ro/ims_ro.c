@@ -312,7 +312,6 @@ int get_sip_header_info(struct sip_msg * req,
         str * event, uint32_t * expires,
         str * callid, str * from_uri, str * to_uri) {
 
-    LM_ERR("retrieving sip info\n");
     sip_method->s = req->first_line.u.request.method.s;
     sip_method->len = req->first_line.u.request.method.len;
 
@@ -333,7 +332,7 @@ int get_sip_header_info(struct sip_msg * req,
     if (!cscf_get_to_uri(req, to_uri))
         goto error;
 
-    LM_ERR("retrieved sip info : sip_method %.*s acc_record_type %i, event %.*s expires %u "
+    LM_DBG("retrieved sip info : sip_method %.*s acc_record_type %i, event %.*s expires %u "
             "call_id %.*s from_uri %.*s to_uri %.*s\n",
             sip_method->len, sip_method->s, *acc_record_type, event->len, event->s, *expires,
             callid->len, callid->s, from_uri->len, from_uri->s, to_uri->len, to_uri->s);
@@ -402,7 +401,8 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
     /*	if(!get_ims_charging_info(req, reply, &icid, &orig_ioi, &term_ioi))
                     goto error;
      */
-    LM_DBG("retrieved ims charging info icid %.*s orig_ioi %.*s term_ioi %.*s\n", icid.len, icid.s, orig_ioi.len, orig_ioi.s, term_ioi.len, term_ioi.s);
+    LM_DBG("retrieved ims charging info icid:[%.*s] orig_ioi:[%.*s] term_ioi:[%.*s]\n",
+    		icid.len, icid.s, orig_ioi.len, orig_ioi.s, term_ioi.len, term_ioi.s);
 
     if (!get_timestamps(req, reply, &req_timestamp, &reply_timestamp))
         goto error;
@@ -431,7 +431,7 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
 
     if (strncmp(req->first_line.u.request.method.s, "INVITE", 6) == 0) {
         auth = cdp_avp->cdp->AAACreateClientAuthSession(1, NULL, (void *) ro_ccr_data);
-        LM_INFO("created Ro Session with id [%.*s]\n", auth->id.len, auth->id.s);
+        LM_DBG("Created Ro Session with id Session ID [%.*s]\n", auth->id.len, auth->id.s);
         //save_session = auth->id;
 
     }

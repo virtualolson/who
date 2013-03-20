@@ -274,7 +274,7 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca) {
                 mscc_avp_list_ptr = &mscc_avp_list;
                 AAA_AVP *mscc_avp = mscc_avp_list_ptr->head;
                 while (mscc_avp != NULL) {
-                    LM_DBG("MSCC AVP code is [%i] and data lenght is [%i]", mscc_avp->code, mscc_avp->data.len);
+                    LM_DBG("MSCC AVP code is [%i] and data length is [%i]", mscc_avp->code, mscc_avp->data.len);
                     switch (mscc_avp->code) {
                             AAA_AVP_LIST y;
                             AAA_AVP *z;
@@ -286,7 +286,7 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca) {
                                     case AVP_CC_Time:
                                         mscc->granted_service_unit->cc_time = get_4bytes(z->data.s);
                                     default:
-                                        LM_ERR("Unsupported Granted Service Unit.\n");
+                                        LM_ERR("Unsupported Granted Service Unit with code:[%d]\n", z->code);
                                 }
                                 z = z->next;
                             }

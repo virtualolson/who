@@ -643,8 +643,8 @@ void send_ccr_stop(struct ro_session *ro_session) {
 
     event_type = new_event_type(&sip_method, &sip_event, 0);
 
-    LM_DBG("Sending CCR STOP request for for user [%.*s] using session id [%.*s]",
-    		ro_session->from_uri.len, ro_session->from_uri.s, ro_session->ro_session_id.len, ro_session->ro_session_id.s);
+    LM_DBG("Sending CCR STOP request for for user:[%.*s] using session id:[%.*s] and units:[%d]\n",
+    		ro_session->from_uri.len, ro_session->from_uri.s, ro_session->ro_session_id.len, ro_session->ro_session_id.s, used);
 
     req_timestamp = time(0);
 
@@ -722,8 +722,6 @@ void send_ccr_stop(struct ro_session *ro_session) {
         LM_ERR("problem add Termination cause AVP to STOP record.\n");
     }
 
-    LM_DBG("Sending CCR Diameter message for STOP record on Ro Sesison ID [%.*s] with charge units [%d]\n",
-    		ro_session->ro_session_id.len, ro_session->ro_session_id.s, used);
     /* send sunchronously so we can respond to callplan (cfg file), so a decision can be made to process the invite */
     cdp_avp->cdp->AAASessionsUnlock(auth->hash);
     AAAMessage *cca = cdp_avp->cdp->AAASendRecvMessageToPeer(acr, &cfg.destination_host);
